@@ -1,0 +1,18 @@
+<launch>
+
+<include file="$(find tf_virtual)/launch/robot_upload.launch"/>
+<include file="$(find realsense2_camera)/launch/rs_rgbd.launch"/>
+
+
+<include file="$(find easy_handeye)/launch/publish.launch">
+    <arg name="eye_on_hand" value="true" />
+    <arg name="namespace_prefix" value="LBR_calibration" />
+</include>
+
+<node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
+
+<node name="robot_state_tester" pkg="tf_virtual" type="state_test.py" output="screen" />
+<node name="pixel2world" pkg="vision" type="pixel_to_world.py" output="screen" /> 
+<!-- <node name="robot_comm" pkg="robot_comm" type="central_comm.py" output="screen" /> -->
+
+</launch>
