@@ -1,9 +1,0 @@
-datset:coco
-backbone:resnet
-out_stride:2
-lr:0.01
-lr_scheduler:poly
-loss_type:ce
-epoch:40
-base_size:129
-crop_size:129

@@ -1,4 +1,0 @@
-BootStrap: docker
-From: nvcr.io/nvidia/mxnet:20.03-py3
-
-%post
