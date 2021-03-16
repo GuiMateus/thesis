@@ -120,11 +120,10 @@ class segmentationInit():
 
                     # Find the ROI where the screw mask belongs
                     roi = feedback[ymin:ymax, xmin:xmax]
-                    print(roi.shape)
-                    print(maskInv.shape)
+
                     # Create ROI and extract mask
                     if roi is not None:
-                        if roi.shape[0] == maskInv.shape[0] or roi.shape[1] == maskInv.shape[1]:
+                        if roi.shape[0] == maskInv.shape[0] and roi.shape[1] == maskInv.shape[1]:
                             imgROI = cv2.bitwise_and(roi,roi, mask=maskInv)
                             extractMask = cv2.bitwise_and(currentMask,currentMask, mask = mask)
 
