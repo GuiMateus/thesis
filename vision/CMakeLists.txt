@@ -67,9 +67,9 @@ install(DIRECTORY include/${PROJECT_NAME}/
 	FILES_MATCHING PATTERN "*.h"
 )
 
-catkin_install_python(PROGRAMS pythonClasses/acquireData.py DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
-catkin_install_python(PROGRAMS main.py DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
-catkin_install_python(PROGRAMS pixel_to_world.py DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
-catkin_install_python(PROGRAMS generateDataset.py DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+catkin_install_python(PROGRAMS src/vision/pythonClasses/acquireData.py DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+catkin_install_python(PROGRAMS src/vision/main.py DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+catkin_install_python(PROGRAMS src/vision/pixel_to_world.py DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+catkin_install_python(PROGRAMS src/vision/generateDataset.py DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 
 
