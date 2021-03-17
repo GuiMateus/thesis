@@ -176,6 +176,7 @@ def detect_image(network, class_names, image, thresh=.5, hier_thresh=.5, nms=.45
     """
     pnum = pointer(c_int(0))
     predict_image(network, image)
+    print("Network value   " + str(network))
     detections = get_network_boxes(network, image.w, image.h,
                                    thresh, hier_thresh, None, 0, pnum, 0)
     num = pnum[0]

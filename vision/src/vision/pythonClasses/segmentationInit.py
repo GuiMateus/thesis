@@ -83,7 +83,10 @@ class segmentationInit():
 
         Returns:
             np.array: Image with bounding boxes and masks.
+            np.array: Array containing individual masks for further processing.
         """
+
+        maskArray = []
         im = imageManipulation()
         i = 0
         # Check if masks exist
@@ -92,9 +95,26 @@ class segmentationInit():
             for detection in self.crops:
                 # Extract bounding box
                 x, y, w, h = im.extractBbox(detection[3])
+
+                ymin = int(y-h/2)
+                ymax = int(y+h/2)
+                xmin = int(x-w/2)
+                xmax = int(x+h/2)
+
+                if ymin < 0:
+                    ymin = 0
+                if ymax > (y+h/2):
+                    ymax = int(y+h/2)
+                if xmin < 0:
+                    xmin = 0
+                if xmax > (x+w/2):
+                    xmax = int(x+w/2)
                 
                 # Turn current mask into a np.array of uint8 and trasnform it into grey
                 currentMask = masks[i][0].astype('uint8') * 255
+                
+                currentMask = cv2.resize(currentMask, (int(xmax-xmin), int(ymax-ymin)))
+
                 maskGrey = cv2.cvtColor(currentMask,cv2.COLOR_BGR2GRAY)
 
                 # Check if mask is not empty
@@ -104,40 +124,26 @@ class segmentationInit():
                     _, mask = cv2.threshold(maskGrey, 10, 255, cv2.THRESH_BINARY)
                     maskInv = cv2.bitwise_not(mask)
 
-                    ymin = int(y-h/2)
-                    ymax = int(y-h/2+maskInv.shape[0])
-                    xmin = int(x-w/2)
-                    xmax = int(x-w/2+maskInv.shape[1])
-
-                    if ymin < 0:
-                        ymin = 0
-                    if ymax > (y+h/2):
-                        ymax = int(y+h/2)
-                    if xmin < 0:
-                        xmin = 0
-                    if xmax > (x+w/2):
-                        xmax = int(x+w/2)
-
                     # Find the ROI where the screw mask belongs
                     roi = feedback[ymin:ymax, xmin:xmax]
 
                     # Create ROI and extract mask
-                    if roi is not None:
-                        if roi.shape[0] == maskInv.shape[0] and roi.shape[1] == maskInv.shape[1]:
+                    if roi.shape[0] == maskInv.shape[0] and roi.shape[1] == maskInv.shape[1]:
+                        if roi is not None and maskInv is not None:
                             imgROI = cv2.bitwise_and(roi,roi, mask=maskInv)
                             extractMask = cv2.bitwise_and(currentMask,currentMask, mask = mask)
-
+                            maskArray.append(extractMask)
                             dst = cv2.add(imgROI, extractMask)
-                            feedback[int(y-h/2):int(y-h/2)+maskInv.shape[0], int(x-w/2):int(x-w/2)+maskInv.shape[1]] = dst
+                            feedback[ymin:ymax, xmin:xmax] = dst
                 i += 1
-        return feedback
+        return feedback, maskArray
 
     def handleObjectCropping(self, inputImage, detections):
         if detections is not None:
             for label, confidence, bbox in detections:
                 croppedImage = self.cropObjects(inputImage, bbox)
                 if croppedImage is not None and croppedImage.shape[0] > 10 and croppedImage.shape[1] > 10:
-                    cv2.resize(croppedImage, self.deepLabDimensions)
+                    croppedImage = cv2.resize(croppedImage, self.deepLabDimensions)
                     self.crops.append([croppedImage, label, confidence, bbox, inputImage.shape[0], inputImage.shape[1]])
                     label = str(label)
 

@@ -4,11 +4,13 @@
 import rospy
 import cv2
 import time
+import open3d as o3d
 # import numpy as nps
 
 from pythonClasses.acquireData import acquireImage
 from pythonClasses.detectObjects import yoloInit
 from pythonClasses.segmentationInit import segmentationInit
+from pythonClasses.imageManipulation import imageManipulation
 from service.srv import vision_detect, vision_detectResponse
 from geometry_msgs.msg import Point
 
@@ -51,7 +53,8 @@ class visionCentral():
         """
         im = acquireImage()
         incomingImage = im.getROSImage()
-        return incomingImage
+        incomingDepth = im.getROSDepthImage()
+        return incomingImage, incomingDepth
 
     def useYOLO(self, image):
         """Performs inference for object detection
@@ -70,7 +73,7 @@ class visionCentral():
             darkNetImage, self.structure, self.classes, image, self.colour)
         return visualFeedbackObjects, objectsDetected
 
-    def useDeepLab(self, segImage, detections, feedback):
+    def useDeepLab(self, segImage, depthImage, detections, feedback):
         """Performs inference for semantic segmentation
 
         Args:
@@ -78,6 +81,8 @@ class visionCentral():
             detections (list[]): List of strings of object detections
         """
         dl = segmentationInit()
+        im = imageManipulation()
+        masksOutput = []
         # Crop input image into sub-regions based on the information from object detection
         dl.handleObjectCropping(segImage, detections)
         # Convert np.arrays to PyTorch tensors
@@ -86,8 +91,9 @@ class visionCentral():
         # Segment all the cropped objects
         if len(tensorArray) > 0:
             masks = dl.inference(self.segModel, tensorArray, self.i)
-            feedback = dl.toImgCoord(masks, feedback)
-        return feedback
+            feedback, masksOutput = dl.toImgCoord(masks, feedback)
+            im.generatePointCloud(feedback, depthImage)
+        return feedback, masksOutput
 
     def startService(self, req):
         """Starts the vision service
@@ -100,7 +106,7 @@ class visionCentral():
         """
 
         # Gather images and create copies to avoid memory address replacement
-        incomingImage = self.getImage()
+        incomingImage, incomingDepth = self.getImage()
         yoloImage = incomingImage.copy()
         segmentationImage = incomingImage.copy()
 
@@ -108,26 +114,28 @@ class visionCentral():
         visualFeedbackObjects, detections = self.useYOLO(yoloImage)
 
         # Semantic segmentation
-        visualFeedbackObjects = self.useDeepLab(segmentationImage, detections, visualFeedbackObjects)
+        visualFeedbackObjects, maskArray = self.useDeepLab(segmentationImage, incomingDepth, detections, visualFeedbackObjects)
         cv2.imshow("image", visualFeedbackObjects)
         cv2.waitKey(1)
 
-        # If any objects are detected by YOLO, publish all centroids
-        if(len(detections) > 0):
-            vectorPoints = vision_detectResponse()
-            for label, confidence, bbox in detections:
-                temp = Point()
-                temp.x = bbox[0]
-                temp.y = bbox[1]
-                vectorPoints.centroid.append(temp)
-            return vectorPoints
+        
 
-        # Else return a null centroid to avoid crashes
-        else:
-            nullPoint = vision_detectResponse()
-            temp = Point()
-            nullPoint.centroid.append(temp)
-            return nullPoint
+
+            # # If any objects are detected by YOLO, publish all centroids
+            # if(len(detections) > 0):
+            #     vectorPoints = vision_detectResponse()
+            #         temp = Point()
+            #         temp.x = bbox[0]
+            #         temp.y = bbox[1]
+            #         vectorPoints.centroid.append(temp)
+            #     return vectorPoints
+
+            # # Else return a null centroid to avoid crashes
+            # else:
+            #     nullPoint = vision_detectResponse()
+            #     temp = Point()
+            #     nullPoint.centroid.append(temp)
+            #     return nullPoint
 
 
 def main():

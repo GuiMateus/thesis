@@ -1,6 +1,7 @@
 import rospy
+import numpy as np
+import cv2
 from sensor_msgs.msg import Image
-from cv_bridge import CvBridge
 from . import img
 from . import imageManipulation
 
@@ -11,7 +12,6 @@ class acquireImage():
         """Class constructor
         """
         self.rosImage = []
-        self.rosDepthImage = []
         self.cvImage = []
         self.cvDepthImage = []
 
@@ -27,8 +27,8 @@ class acquireImage():
     def getROSDepthImage(self):
         """Wait for depth images
         """
-        bridge = CvBridge()
-        self.rosDepthImage = rospy.wait_for_message("/camera/depth/image_rect_raw", Image, timeout=100)
-        self.cvDepthImage = self.bridge.imgmsg_to_cv2(self.rosDepthImage, "passthrough")
-        print(self.cvDepthImage.size())
+        msg = rospy.wait_for_message("/camera/depth/image_rect_raw", Image, timeout=100)
+        self.cvDepthImage = np.frombuffer(msg.data, dtype=np.uint16).reshape(msg.height, msg.width, -1)
+
+
         return self.cvDepthImage
