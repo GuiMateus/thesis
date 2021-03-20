@@ -1,2 +1,2 @@
 ---
-geometry_msgs/Point[] masks
+std_msgs/String image_detections

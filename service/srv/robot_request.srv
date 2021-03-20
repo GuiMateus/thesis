@@ -1,2 +1,2 @@
 ---
-sensor_msgs/PointCloud centroid_world_coord
+sensor_msgs/PointCloud2 world_semantics

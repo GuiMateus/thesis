@@ -4,16 +4,16 @@
 import rospy
 import cv2
 import time
-import open3d as o3d
-# import numpy as nps
+import json
+import numpy as np
 
+from pythonClasses.pointCloudProcessing import pointCloudProcessing
 from pythonClasses.acquireData import acquireImage
 from pythonClasses.detectObjects import yoloInit
 from pythonClasses.segmentationInit import segmentationInit
 from pythonClasses.imageManipulation import imageManipulation
 from service.srv import vision_detect, vision_detectResponse
-from geometry_msgs.msg import Point
-
+from std_msgs.msg import String
 
 class visionCentral():
     """
@@ -30,6 +30,9 @@ class visionCentral():
         self.timeCount = 0
         self.segModel = []
         self.imageNorm = []
+        self.toFrame = '/camera_color_optical_frame'
+        self.fromFrame = '/camera_color_optical_frame'
+        self.seq = 0
 
     def initializeYOLO(self):
         """Load YOLOv4 weights
@@ -81,7 +84,6 @@ class visionCentral():
             detections (list[]): List of strings of object detections
         """
         dl = segmentationInit()
-        im = imageManipulation()
         masksOutput = []
         # Crop input image into sub-regions based on the information from object detection
         dl.handleObjectCropping(segImage, detections)
@@ -92,7 +94,6 @@ class visionCentral():
         if len(tensorArray) > 0:
             masks = dl.inference(self.segModel, tensorArray, self.i)
             feedback, masksOutput = dl.toImgCoord(masks, feedback)
-            im.generatePointCloud(feedback, depthImage)
         return feedback, masksOutput
 
     def startService(self, req):
@@ -105,6 +106,9 @@ class visionCentral():
             geometry_msgs/Point[]: Bounding box centroids
         """
 
+        im = imageManipulation()
+        pp = pointCloudProcessing()
+
         # Gather images and create copies to avoid memory address replacement
         incomingImage, incomingDepth = self.getImage()
         yoloImage = incomingImage.copy()
@@ -115,38 +119,42 @@ class visionCentral():
 
         # Semantic segmentation
         visualFeedbackObjects, maskArray = self.useDeepLab(segmentationImage, incomingDepth, detections, visualFeedbackObjects)
-        cv2.imshow("image", visualFeedbackObjects)
-        cv2.waitKey(1)
-
-        
+        # cv2.imshow("image", visualFeedbackObjects)
+        # cv2.waitKey(1)
 
 
-            # # If any objects are detected by YOLO, publish all centroids
-            # if(len(detections) > 0):
-            #     vectorPoints = vision_detectResponse()
+         #     
             #         temp = Point()
             #         temp.x = bbox[0]
             #         temp.y = bbox[1]
             #         vectorPoints.centroid.append(temp)
             #     return vectorPoints
 
-            # # Else return a null centroid to avoid crashes
-            # else:
-            #     nullPoint = vision_detectResponse()
-            #     temp = Point()
-            #     nullPoint.centroid.append(temp)
-            #     return nullPoint
+        if len(maskArray) != 0:
+            stringMsg = String()
+            imageMsg = vision_detectResponse()
+            jstr = im.im2json(visualFeedbackObjects)
+            stringMsg.data = jstr
+            imageMsg.image_detections = stringMsg
+
+            generatedCloud = pp.pointCloudGenerate(visualFeedbackObjects)
+            pp.downscaleCloud(generatedCloud)
+            return imageMsg
+    
+        else:
+            return []
+
 
 
 def main():
     vc = visionCentral()
-    rospy.init_node("partDetectionNode")
+    rospy.init_node("semanticSegmentationNode")
     vc.initializeYOLO()
     vc.initializeDeepLab()
-    # rospy.Service("vision_service", vision_detect, vc.startService)
+
+    rospy.Service("vision_service", vision_detect, vc.startService)
     while(not rospy.is_shutdown()):
-        vc.startService(1)
-        # rospy.spin()
+        rospy.spin()
 
 
 if __name__ == "__main__":
