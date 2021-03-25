@@ -93,7 +93,7 @@ class visionCentral():
         # Segment all the cropped objects
         if len(tensorArray) > 0:
             masks = dl.inference(self.segModel, tensorArray, self.i)
-            feedback, masksOutput = dl.toImgCoord(masks, feedback)
+            feedback, masksOutput = dl.toImgCoord(masks, depthImage, feedback)
         return feedback, masksOutput
 
     def startService(self, req):
@@ -137,7 +137,7 @@ class visionCentral():
             stringMsg.data = jstr
             imageMsg.image_detections = stringMsg
 
-            generatedCloud = pp.pointCloudGenerate(visualFeedbackObjects)
+            generatedCloud = pp.pointCloudGenerate(incomingImage, incomingDepth)
             pp.downscaleCloud(generatedCloud)
             return imageMsg
     

@@ -1,6 +1,8 @@
 import torch
 import cv2
 from .imageManipulation import imageManipulation
+from .acquireData import acquireImage
+from .pointCloudProcessing import pointCloudProcessing
 from .deeplab.modeling.deeplab import *
 from PIL import Image
 from torchvision import transforms
@@ -74,7 +76,7 @@ class segmentationInit():
         return masks
 
 
-    def toImgCoord(self, masks, feedback):
+    def toImgCoord(self, masks, depth, feedback):
         """Transforms masks to original image frame. This function is very messy and out of place.
 
         Args:
@@ -88,11 +90,14 @@ class segmentationInit():
 
         maskArray = []
         im = imageManipulation()
+        pc = pointCloudProcessing()
+        ai = acquireImage()
         i = 0
         # Check if masks exist
         if len(masks) is not 0:
             # Check every mask/detection
             for detection in self.crops:
+
                 # Extract bounding box
                 x, y, w, h = im.extractBbox(detection[3])
 
@@ -114,12 +119,17 @@ class segmentationInit():
                 currentMask = masks[i][0].astype('uint8') * 255
                 
                 currentMask = cv2.resize(currentMask, (int(xmax-xmin), int(ymax-ymin)))
+                
+                # cv2.imwrite("/home/gui/mask.png", currentMask)
+                roiDepth = depth[ymin:ymax, xmin:xmax]
+
+                pc.filterMasks(currentMask, roiDepth)
 
                 maskGrey = cv2.cvtColor(currentMask,cv2.COLOR_BGR2GRAY)
 
                 # Check if mask is not empty
                 if cv2.countNonZero(maskGrey) is not 0:
-                    
+
                     # Create a binary mask
                     _, mask = cv2.threshold(maskGrey, 10, 255, cv2.THRESH_BINARY)
                     maskInv = cv2.bitwise_not(mask)
@@ -132,6 +142,7 @@ class segmentationInit():
                         if roi is not None and maskInv is not None:
                             imgROI = cv2.bitwise_and(roi,roi, mask=maskInv)
                             extractMask = cv2.bitwise_and(currentMask,currentMask, mask = mask)
+                            # croppedDepth = im.cropImage(depth, xmin, ymin, w, h)
                             maskArray.append(extractMask)
                             dst = cv2.add(imgROI, extractMask)
                             feedback[ymin:ymax, xmin:xmax] = dst
@@ -139,9 +150,11 @@ class segmentationInit():
         return feedback, maskArray
 
     def handleObjectCropping(self, inputImage, detections):
+        # depthImageCV = inputDepthImage.astype(np.float32)
         if detections is not None:
             for label, confidence, bbox in detections:
                 croppedImage = self.cropObjects(inputImage, bbox)
+
                 if croppedImage is not None and croppedImage.shape[0] > 10 and croppedImage.shape[1] > 10:
                     croppedImage = cv2.resize(croppedImage, self.deepLabDimensions)
                     self.crops.append([croppedImage, label, confidence, bbox, inputImage.shape[0], inputImage.shape[1]])

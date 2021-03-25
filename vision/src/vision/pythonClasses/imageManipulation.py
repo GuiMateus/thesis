@@ -1,28 +1,13 @@
-import numpy as np
-import cv2
-import rospy
 import pickle
 import json
 import base64
-# from pypcd import pypcd
-from std_msgs.msg import Header, String
-from sensor_msgs.msg import PointCloud2, PointField
-
 
 class imageManipulation():
     """Class containing utilities for image processing
     """
     
     def __init__(self):
-        self.type_mappings = [(PointField.INT8, np.dtype('int8')),
-                 (PointField.UINT8, np.dtype('uint8')),
-                 (PointField.INT16, np.dtype('int16')),
-                 (PointField.UINT16, np.dtype('uint16')),
-                 (PointField.INT32, np.dtype('int32')),
-                 (PointField.UINT32, np.dtype('uint32')),
-                 (PointField.FLOAT32, np.dtype('float32')),
-                 (PointField.FLOAT64, np.dtype('float64'))]
-        self.nptype_to_pftype = dict((nptype, pftype) for pftype, nptype in self.type_mappings)
+       a = 0
     
     def toPercent(self, coordinate, dimensionSize):
         """Converts a pixel coordinate to a percentage 
