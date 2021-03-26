@@ -133,11 +133,12 @@ class visionCentral():
         if len(maskArray) != 0:
             stringMsg = String()
             imageMsg = vision_detectResponse()
-            jstr = im.im2json(visualFeedbackObjects)
+            jstr = im.bbox2json(detections)
+            # jstr = im.im2json(visualFeedbackObjects)
             stringMsg.data = jstr
             imageMsg.image_detections = stringMsg
 
-            generatedCloud = pp.pointCloudGenerate(incomingImage, incomingDepth)
+            generatedCloud = pp.pointCloudGenerate(visualFeedbackObjects, incomingDepth)
             pp.downscaleCloud(generatedCloud)
             return imageMsg
     

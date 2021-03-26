@@ -32,11 +32,12 @@ class pixel_to_world():
         encoded_colors = np.cast[np.float32](encoded_colors)
         return encoded_colors
 
-    def get_point(self, msg):
+    def get_point(self, msg, x, y):
         start = time.time()
         
         depth = pc2.read_points(msg, field_names=(
-            "x", "y", "z"), skip_nans=True)  # Questionable
+            "x", "y", "z"), skip_nans=True, uvs=[
+                                            (x, y)])  # Questionable
         cam_point = list(depth)
         break1 = False
 
@@ -81,15 +82,15 @@ class pixel_to_world():
 
         im = imageManipulation()
         strMsg = String()
-        strName = String()
         worldPoints = robot_requestResponse()
-        imgChannels = ChannelFloat32()
 
         visionResults = rospy.ServiceProxy('vision_service', vision_detect)
         visionResponse = visionResults.call()
+
         strMsg = visionResponse.image_detections
-        stringImage = strMsg.data
-        pixelPoint = im.json2im(stringImage)
+        stringDetections = strMsg.data
+
+        detections = im.json2bbox(stringDetections)
         print(pixelPoint)
         # cv2.imwrite("/home/gui/aa.png", pixelPoint)
        
@@ -104,41 +105,7 @@ class pixel_to_world():
         
         pointArray = []
 
-        if len(pixelPoint) > 0:
-
-            # fx = 686.602445530949
-            # fy = 686.602445530949
-            # cx = 638.477030032085
-            # cy = 359.464552799678
-            # w = 640
-            # h = 480
-            # intrinsicsObj = o3d.camera.PinholeCameraIntrinsic()
-
-            # intrinsicsObj.set_intrinsics(w, h, fx, fy, cx, cy)
-
-            # imgo3d = o3d.geometry.Image(input_rgb.astype(np.uint8))
-            # depth3d = o3d.geometry.Image(input_depth.astype(np.float32))
-
-            # rgbd = o3d.geometry.RGBDImage.create_rgbd_image_from_color_and_depth(
-            #     imgo3d, depth3d, convert_rgb_to_intensity=False)
-            # cloud = o3d.geometry.PointCloud.create_point_cloud_from_rgbd_image(
-            #     rgbd, intrinsicsObj)
-
-            # print(len(pixelPoint))
-
-            # print(len(pixelPoint[y]))
-
-
-            # r,g,b = pixelPoint[y,x]
-            # worldPoint = self.get_point(msg)
-            # print(len(worldPoint))
-            # encodedColours = self.rgb2float(pixelPoint)
-            # print(len(encodedColours))
-
-            # new_data = np.hstack((worldPoint[:, 0, np.newaxis].astype(np.float32), worldPoint[:, 1, np.newaxis].astype(
-            # np.float32), worldPoint[:, 2, np.newaxis].astype(np.float32), encodedColours[:, np.newaxis]))
-
-            # new_cloud = pypcd.make_xyz_rgb_point_cloud(new_data)
+        if len(detections) > 0:
 
             nullPoint = worldPoints
             temp = Point32()

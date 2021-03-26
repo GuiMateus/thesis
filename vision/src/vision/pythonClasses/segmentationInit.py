@@ -71,6 +71,11 @@ class segmentationInit():
             with torch.no_grad():
                 # print(type(tensor[0]))
                 output = model(tensor[0])
+                prediction = torch.max(output.data, 1)[1].numpy()
+                # outputArray = prediction.numpy()
+                result = np.where(prediction == 1)
+                # print(result)
+
                 outputMax = decode_seg_map_sequence(torch.max(output[:3], 1)[1].detach().cpu().numpy())
                 masks.append(outputMax)
         return masks
@@ -121,9 +126,9 @@ class segmentationInit():
                 currentMask = cv2.resize(currentMask, (int(xmax-xmin), int(ymax-ymin)))
                 
                 # cv2.imwrite("/home/gui/mask.png", currentMask)
-                roiDepth = depth[ymin:ymax, xmin:xmax]
+                # roiDepth = depth[ymin:ymax, xmin:xmax]
 
-                pc.filterMasks(currentMask, roiDepth)
+                # pc.filterMasks(currentMask, roiDepth)
 
                 maskGrey = cv2.cvtColor(currentMask,cv2.COLOR_BGR2GRAY)
 

@@ -31,7 +31,7 @@ def main():
         if input(''):
             i = i + 1
             gd.saveImages(
-                i, "/home/gui/Documents/P9_ws/src/rob10/vision/data/datapoint")
+                i, "/home/gui/Documents/data/environment/data/datapoint")
 
 
 if __name__ == "__main__":

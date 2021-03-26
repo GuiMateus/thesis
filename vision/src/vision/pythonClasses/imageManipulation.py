@@ -2,6 +2,7 @@ import pickle
 import json
 import base64
 
+
 class imageManipulation():
     """Class containing utilities for image processing
     """
@@ -115,3 +116,40 @@ class imageManipulation():
         imdata = base64.b64decode(load['image'])
         im = pickle.loads(imdata)
         return im
+
+    def bbox2json(self, detections):
+        jsonArray = []
+        for label, confidence, bbox in detections:
+            x, y, w, h = bbox
+
+
+            buildJson = {
+                "x": str(x),
+                "y": str(y),
+                "w": str(w),
+                "h": str(h),
+                "confidence": str(confidence),
+                "label": str(label)
+            }
+
+                # convert into JSON:
+            jsonObject = json.dumps(buildJson)
+            jsonArray.append(jsonObject)
+        finalJson = json.dumps(jsonArray)
+        print(finalJson)
+        return finalJson
+
+    def json2bbox(self, jsonBbox):
+        detectionsArray = []
+        stringDetections = json.loads(jsonBbox)
+        for detection in stringDetections:
+            jsonDetection = json.loads(detection)
+            label = jsonDetection["label"]
+            confidence = jsonDetection["confidence"]
+            bbox = self.compressBbox(jsonDetection["x"], jsonDetection["y"], jsonDetection["w"], jsonDetection["h"])
+
+            detectionsArray.append([label, confidence, bbox])
+        return detectionsArray
+
+
+            
