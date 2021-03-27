@@ -22,8 +22,8 @@ class yoloInit():
             (int list): Classes colours
         """
         darknet.set_gpu(0)
-        net, names, colours = darknet.load_network("/home/gui/Documents/data/pumps-v2/yolov4-pump-v1.cfg",
-                                                   "/home/gui/Documents/data/pumps-v2/pumps-v2.data", "/home/gui/Documents/data/pumps-v2/backup/yolov4-pump-v1_final.weights", batch_size=1)
+        net, names, colours = darknet.load_network("/opt/vision/weights/yolov4/yolov4-pumps-v2.cfg",
+                                                   "/opt/vision/weights/yolov4/pumps-v2.data", "/opt/vision/weights/yolov4/yolov4-pumps-v2_final.weights", batch_size=1)
         return net, names, colours
 
     def array_to_image(self, cvImage, networkStructure, channels=3):

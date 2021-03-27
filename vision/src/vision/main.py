@@ -15,6 +15,18 @@ from pythonClasses.imageManipulation import imageManipulation
 from service.srv import vision_detect, vision_detectResponse
 from std_msgs.msg import String
 
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKCYAN = '\033[96m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
+
 class visionCentral():
     """
     Central vision node which handles YOLOv4 and DeeplabV3 wrappers
@@ -33,20 +45,29 @@ class visionCentral():
         self.toFrame = '/camera_color_optical_frame'
         self.fromFrame = '/camera_color_optical_frame'
         self.seq = 0
+        self.pointCloudFileName = "/opt/vision/staticEnvironment/environmentCloud.ply"
 
     def initializeYOLO(self):
         """Load YOLOv4 weights
         """
-        yl = yoloInit()
-        self.structure, self.classes, self.colour = yl.initialiseNetwork()
-        print("yolo fine")
+        try:
+            print(f"{bcolors.OKCYAN}Attempting to load object detector.{bcolors.ENDC}")
+            yl = yoloInit()
+            self.structure, self.classes, self.colour = yl.initialiseNetwork()
+            print(f"{bcolors.OKGREEN}Object detector successfully loaded.{bcolors.ENDC}")
+        except:
+            print(f"{bcolors.WARNING}An error occured while loading the object detector, are the paths to weights, model, and cfg correct?{bcolors.ENDC}")
 
     def initializeDeepLab(self):
         """Load DeepLabV3 weights
         """
-        dl = segmentationInit()
-        self.segModel, self.imageNorm = dl.deeplabInit()
-        print("segmentation fine")
+        try:
+            print(f"{bcolors.OKCYAN} Now attempting to load segmentation model and weights.{bcolors.ENDC}")
+            dl = segmentationInit()
+            self.segModel, self.imageNorm = dl.deeplabInit()
+            print(f"{bcolors.OKGREEN}Segmentation model and weights loaded successfully, you can now use the models.{bcolors.ENDC}")
+        except:
+            print(f"{bcolors.WARNING}An error occured whiel loading the segmentation weights and model, are the paths correct?{bcolors.ENDC}")
 
     def getImage(self):
         """Gets images from the rospy realsense sdk
@@ -94,7 +115,10 @@ class visionCentral():
         if len(tensorArray) > 0:
             masks = dl.inference(self.segModel, tensorArray, self.i)
             feedback, masksOutput = dl.toImgCoord(masks, depthImage, feedback)
-        return feedback, masksOutput
+            crops = dl.getCrops()
+            return feedback, masksOutput, crops
+        else:
+            return None, None, None
 
     def startService(self, req):
         """Starts the vision service
@@ -118,31 +142,21 @@ class visionCentral():
         visualFeedbackObjects, detections = self.useYOLO(yoloImage)
 
         # Semantic segmentation
-        visualFeedbackObjects, maskArray = self.useDeepLab(segmentationImage, incomingDepth, detections, visualFeedbackObjects)
-        # cv2.imshow("image", visualFeedbackObjects)
-        # cv2.waitKey(1)
+        visualFeedbackObjects, maskArray, crops = self.useDeepLab(segmentationImage, incomingDepth, detections, visualFeedbackObjects)
 
-
-         #     
-            #         temp = Point()
-            #         temp.x = bbox[0]
-            #         temp.y = bbox[1]
-            #         vectorPoints.centroid.append(temp)
-            #     return vectorPoints
-
-        if len(maskArray) != 0:
+        if maskArray is not None and len(maskArray) != 0:
             stringMsg = String()
-            imageMsg = vision_detectResponse()
-            jstr = im.bbox2json(detections)
-            # jstr = im.im2json(visualFeedbackObjects)
+            detectionsMsg = vision_detectResponse()
+            jstr = im.bbox2json(crops)
             stringMsg.data = jstr
-            imageMsg.image_detections = stringMsg
+            detectionsMsg.image_detections = stringMsg
 
-            generatedCloud = pp.pointCloudGenerate(visualFeedbackObjects, incomingDepth)
-            pp.downscaleCloud(generatedCloud)
-            return imageMsg
+            pp.pointCloudGenerate(visualFeedbackObjects, incomingDepth)
+            pp.saveCloud(self.pointCloudFileName)
+            return detectionsMsg
     
         else:
+            print("No masks detected")
             return []
 
 

@@ -5,7 +5,8 @@ import rospy
 import numpy as np
 import cv2
 import time
-from pypcd import pypcd
+import json
+
 
 
 from service.srv import vision_detect, vision_detectResponse, robot_request, robot_requestResponse
@@ -32,9 +33,7 @@ class pixel_to_world():
         encoded_colors = np.cast[np.float32](encoded_colors)
         return encoded_colors
 
-    def get_point(self, msg, x, y):
-        start = time.time()
-        
+    def get_point(self, msg, x, y):        
         depth = pc2.read_points(msg, field_names=(
             "x", "y", "z"), skip_nans=True, uvs=[
                                             (x, y)])  # Questionable
@@ -72,13 +71,10 @@ class pixel_to_world():
             translate=trans, angles=tf.transformations.euler_from_quaternion(rot))
         obj_vector = np.concatenate((point, np.ones(1))).reshape((4, 1))
         obj_base = np.dot(world_to_cam, obj_vector)
-        end = time.time()
-        print(end - start)
         print(obj_base[0:3])
         return cam_point
 
     def robotRequestCB(self, req):
-
 
         im = imageManipulation()
         strMsg = String()
@@ -91,7 +87,6 @@ class pixel_to_world():
         stringDetections = strMsg.data
 
         detections = im.json2bbox(stringDetections)
-        print(pixelPoint)
         # cv2.imwrite("/home/gui/aa.png", pixelPoint)
        
         msg = rospy.wait_for_message(
@@ -107,16 +102,35 @@ class pixel_to_world():
 
         if len(detections) > 0:
 
+            jsonObject = {}
+            jsonObject['detections'] = []
+
+            for label, confidence, bbox in detections:
+                xmin, ymin, xmax, ymax = im.extractBbox(bbox)
+                bboxMinWorld = self.get_point(msg, int(xmin), int(ymin))
+                bboxMaxWorld = self.get_point(msg, int(xmax), int(ymax))
+
+
+                jsonObject['detections'].append({
+                    'label' : label,
+                    'confidence' : confidence,
+                    'min' : str(bboxMinWorld),
+                    'max' : str(bboxMaxWorld)
+                    
+                })
+            with open('predictions.json', 'w') as outfile:
+                json.dump(jsonObject, outfile)
+
             nullPoint = worldPoints
             temp = Point32()
-            nullPoint.centroid_world_coord.points.append(temp)
+            nullPoint.world_semantics.append(temp)
             print("Done!")
             return worldPoints
 
         else:
             nullPoint = worldPoints
             temp = Point32()
-            nullPoint.centroid_world_coord.points.append(temp)
+            nullPoint.world_semantics.points.append(temp)
             return nullPoint
             
 def main():

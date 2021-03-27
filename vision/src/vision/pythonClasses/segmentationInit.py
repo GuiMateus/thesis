@@ -20,6 +20,7 @@ class segmentationInit():
         """
         self.crops = []
         self.deepLabDimensions = (64,64)
+        self.newBbox = []
 
 
 
@@ -37,7 +38,7 @@ class segmentationInit():
             freeze_bn=False)
 
         # Load the weights for DeepLabV3 trained on different types of screws
-        weights = torch.load('/home/gui/Documents/data/model_best.pth.tar', map_location='cpu')
+        weights = torch.load('/opt/vision/weights/deeplab/model_best.pth.tar', map_location='cpu')
         model.load_state_dict(weights['state_dict'])
         model.eval()
 
@@ -104,21 +105,7 @@ class segmentationInit():
             for detection in self.crops:
 
                 # Extract bounding box
-                x, y, w, h = im.extractBbox(detection[3])
-
-                ymin = int(y-h/2)
-                ymax = int(y+h/2)
-                xmin = int(x-w/2)
-                xmax = int(x+h/2)
-
-                if ymin < 0:
-                    ymin = 0
-                if ymax > (y+h/2):
-                    ymax = int(y+h/2)
-                if xmin < 0:
-                    xmin = 0
-                if xmax > (x+w/2):
-                    xmax = int(x+w/2)
+                xmin, ymin, xmax, ymax = im.extractBbox(detection[3])
                 
                 # Turn current mask into a np.array of uint8 and trasnform it into grey
                 currentMask = masks[i][0].astype('uint8') * 255
@@ -162,7 +149,7 @@ class segmentationInit():
 
                 if croppedImage is not None and croppedImage.shape[0] > 10 and croppedImage.shape[1] > 10:
                     croppedImage = cv2.resize(croppedImage, self.deepLabDimensions)
-                    self.crops.append([croppedImage, label, confidence, bbox, inputImage.shape[0], inputImage.shape[1]])
+                    self.crops.append([croppedImage, label, confidence, self.newBbox, inputImage.shape[0], inputImage.shape[1]])
                     label = str(label)
 
 
@@ -182,7 +169,8 @@ class segmentationInit():
         x = int(round(x-(w/2)))
         y = int(round(y-(h/2)))
 
-        cropped = im.cropImage(image, x, y, w, h)
+        cropped, self.newBbox = im.cropImage(image, x, y, w, h)
+
         return cropped
 
 
@@ -206,3 +194,6 @@ class segmentationInit():
             tensor = normalize(sample)['image'].unsqueeze(0)
             tensorArray.append([tensor, croppedIndex[1], croppedIndex[2], croppedIndex[3], croppedIndex[4], croppedIndex[5]])
         return tensorArray
+    
+    def getCrops(self):
+        return self.crops

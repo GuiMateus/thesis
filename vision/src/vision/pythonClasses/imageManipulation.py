@@ -54,8 +54,7 @@ class imageManipulation():
 
         width = int(width)
         height = int(height)
-        sumY = y+width
-        sumX = x+height
+
 
         if x < 0:
             width = width + x
@@ -63,13 +62,18 @@ class imageManipulation():
         if y < 0:
             height = y + height
             y = 0
+
+        sumY = y+height
+        sumX = x+width
+
         if sumY > inputImage.shape[0]:
             sumY = inputImage.shape[0]
         if sumX > inputImage.shape[1]:
             sumX = inputImage.shape[1]
 
-        croppedImage = inputImage[y:y+height, x:x+width]
-        return croppedImage
+        croppedImage = inputImage[y:sumY, x:sumX]
+        bbox = self.compressBbox(x, y, sumX, sumY)
+        return croppedImage, bbox
 
     def extractBbox(self, bbox):
         """Extracts x, y, w, h coordinates from a bbox method
@@ -119,17 +123,16 @@ class imageManipulation():
 
     def bbox2json(self, detections):
         jsonArray = []
-        for label, confidence, bbox in detections:
-            x, y, w, h = bbox
-
+        for detection in detections:
+            x, y, w, h = detection[3]
 
             buildJson = {
+                "label": str(detection[1]),
+                "confidence": str(detection[2]),
                 "x": str(x),
                 "y": str(y),
                 "w": str(w),
-                "h": str(h),
-                "confidence": str(confidence),
-                "label": str(label)
+                "h": str(h)
             }
 
                 # convert into JSON:

@@ -1,6 +1,7 @@
 import numpy as np
 import open3d as o3d
 import cv2
+import os
 import matplotlib.pyplot as plt
 from .imageManipulation import imageManipulation
 
@@ -12,6 +13,7 @@ class pointCloudProcessing():
         self.intrinsicMatrix = np.matrix([[725.418477077181, 0, 316.369990062088], 
         [0, 697.956763056449, 250.294460891937],
         [0, 0, 1]])
+        self.cloud = []
     
     
     def pointCloudGenerate(self, rgbImage, depthImage, intensity=False):
@@ -38,10 +40,15 @@ class pointCloudProcessing():
             cloud = o3d.geometry.PointCloud.create_from_rgbd_image(rgbd, intrinsicsObj)
 
             cloud.transform([[1, 0, 0, 0], [0, -1, 0, 0], [0, 0, -1, 0], [0, 0, 0, 1]])
-            return cloud
+            self.cloud = cloud
     
         else:
             return None
+    
+    def saveCloud(self, fileName):
+        o3d.io.write_point_cloud("temp.ply", self.cloud)
+
+
         
     def downscaleCloud(self, pointCloud):
         octreeData = o3d.cuda.pybind.geometry.Octree(max_depth=8)
@@ -49,13 +56,17 @@ class pointCloudProcessing():
 
         o3d.geometry.Octree.convert_from_point_cloud(octreeData, pointCloud, size_expand=0.0001)
         
-        # voxel_grid = o3d.geometry.VoxelGrid.create_from_point_cloud(pointCloud,
-        #                                                       voxel_size=0.01)
+        voxel_grid = o3d.geometry.VoxelGrid.create_from_point_cloud(pointCloud,
+                                                              voxel_size=0.005)
 
         # pcd_tree = o3d.geometry.KDTreeFlann(pointCloud)
 
-        o3d.visualization.draw_geometries([pointCloud])
-        o3d.io.write_point_cloud("/home/gui/octree.ply", pointCloud)
+        # o3d.visualization.draw_geometries([octreeData])
+        o3d.visualization.draw_geometries([voxel_grid])
+
+
+        # o3d.io.write_point_cloud("/home/gui/octree.ply", octreeData)
+        # o3d.io.write_triangle_mesh("/home/gui/octree.ply", octreeData)
 
         print(octreeData)
         return octreeData
