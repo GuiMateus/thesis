@@ -21,5 +21,6 @@ sudo mv "/opt/vision/weights/yolov4/download?cid=B7DCBFD795E0B204&resid=B7DCBFD7
 sudo wget --no-check-certificate "https://onedrive.live.com/download?cid=B7DCBFD795E0B204&resid=B7DCBFD795E0B204%212748&authkey=AGM6m4QtG2CDItI"
 sudo mv "/opt/vision/weights/yolov4/download?cid=B7DCBFD795E0B204&resid=B7DCBFD795E0B204!2748&authkey=AGM6m4QtG2CDItI" "yolov4-pumps-v2_final.weights"
 
-cd ../..
-sudo mkdir staticEnvironment
+cd
+
+mkdir .environmnetReconstruction

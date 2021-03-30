@@ -42,8 +42,6 @@ class visionCentral():
         self.timeCount = 0
         self.segModel = []
         self.imageNorm = []
-        self.toFrame = '/camera_color_optical_frame'
-        self.fromFrame = '/camera_color_optical_frame'
         self.seq = 0
         self.pointCloudFileName = "/opt/vision/staticEnvironment/environmentCloud.ply"
 
@@ -142,7 +140,7 @@ class visionCentral():
         visualFeedbackObjects, detections = self.useYOLO(yoloImage)
 
         # Semantic segmentation
-        visualFeedbackObjects, maskArray, crops = self.useDeepLab(segmentationImage, incomingDepth, detections, visualFeedbackObjects)
+        visualFeedbackMasks, maskArray, crops = self.useDeepLab(segmentationImage, incomingDepth, detections, segmentationImage)
 
         if maskArray is not None and len(maskArray) != 0:
             stringMsg = String()
@@ -150,9 +148,12 @@ class visionCentral():
             jstr = im.bbox2json(crops)
             stringMsg.data = jstr
             detectionsMsg.image_detections = stringMsg
+            
 
-            pp.pointCloudGenerate(visualFeedbackObjects, incomingDepth)
+            pp.pointCloudGenerate(visualFeedbackMasks, incomingDepth)
             pp.saveCloud(self.pointCloudFileName)
+            cv2.imwrite(".environmentReconstruction/detections.png", visualFeedbackObjects)
+            cv2.imwrite(".environmentReconstruction/masks.png", visualFeedbackMasks)
             return detectionsMsg
     
         else:

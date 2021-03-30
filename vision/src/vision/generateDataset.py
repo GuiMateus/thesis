@@ -25,7 +25,7 @@ class generateDataset():
 def main():
     gd = generateDataset()
     rospy.init_node("generateDataset")
-    i = 0
+    i = 403
     while not rospy.is_shutdown():
         gd.showImages()
         if input(''):

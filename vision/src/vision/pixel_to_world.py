@@ -118,7 +118,7 @@ class pixel_to_world():
                     'max' : str(bboxMaxWorld)
                     
                 })
-            with open('predictions.json', 'w') as outfile:
+            with open('.environmentReconstruction/predictions.json', 'w') as outfile:
                 json.dump(jsonObject, outfile)
 
             nullPoint = worldPoints

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(vision)
+project(userInterface)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -12,6 +12,7 @@ find_package(catkin COMPONENTS
         std_msgs
         geometry_msgs
         sensor_msgs
+        vision
         REQUIRED)
 
 include_directories(${PCL_INCLUDE_DIRS} ${catkin_INCLUDE_DIRS})
@@ -50,6 +51,7 @@ catkin_package(
   CATKIN_DEPENDS
     rospy
     message_runtime
+    vision
 )
 
 
@@ -62,9 +64,7 @@ install(DIRECTORY include/${PROJECT_NAME}/
 	FILES_MATCHING PATTERN "*.h"
 )
 
-catkin_install_python(PROGRAMS src/vision/pythonClasses/acquireData.py DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
-catkin_install_python(PROGRAMS src/vision/main.py DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
-catkin_install_python(PROGRAMS src/vision/pixel_to_world.py DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
-catkin_install_python(PROGRAMS src/vision/generateDataset.py DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+catkin_install_python(PROGRAMS src/userInterface/userInterface.py DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+
 
 

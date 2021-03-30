@@ -2,6 +2,7 @@ import numpy as np
 import open3d as o3d
 import cv2
 import os
+import time
 import matplotlib.pyplot as plt
 from .imageManipulation import imageManipulation
 
@@ -39,14 +40,23 @@ class pointCloudProcessing():
             rgbd = o3d.geometry.RGBDImage.create_from_color_and_depth(imgo3d, depth3d, convert_rgb_to_intensity=intensity)
             cloud = o3d.geometry.PointCloud.create_from_rgbd_image(rgbd, intrinsicsObj)
 
-            cloud.transform([[1, 0, 0, 0], [0, -1, 0, 0], [0, 0, -1, 0], [0, 0, 0, 1]])
+            cloud.transform([[1, 0, 0, 0], [0, -1, 0, 0], [0, 0, -0.75, 0], [0, 0, 0, 1]])
             self.cloud = cloud
     
         else:
             return None
     
     def saveCloud(self, fileName):
-        o3d.io.write_point_cloud("temp.ply", self.cloud)
+        vis = o3d.visualization.Visualizer()
+        vis.create_window(window_name="fuckThis", width=640, height=480, visible=False)
+        vis.add_geometry(self.cloud)
+        vis.update_geometry(self.cloud)
+        vis.poll_events()
+        vis.update_renderer()
+        vis.capture_screen_image(".environmentReconstruction/cloud.png", True)
+        time.sleep(5)
+        vis.destroy_window()
+        o3d.io.write_point_cloud(".environmentReconstruction/temp.ply", self.cloud)
 
 
         
@@ -62,7 +72,6 @@ class pointCloudProcessing():
         # pcd_tree = o3d.geometry.KDTreeFlann(pointCloud)
 
         # o3d.visualization.draw_geometries([octreeData])
-        o3d.visualization.draw_geometries([voxel_grid])
 
 
         # o3d.io.write_point_cloud("/home/gui/octree.ply", octreeData)
