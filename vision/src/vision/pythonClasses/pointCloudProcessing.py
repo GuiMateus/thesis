@@ -48,14 +48,13 @@ class pointCloudProcessing():
     
     def saveCloud(self, fileName):
         vis = o3d.visualization.Visualizer()
-        vis.create_window(window_name="fuckThis", width=640, height=480, visible=False)
+        vis.create_window(window_name="CloudSaverWindow", width=1280, height=720, visible=False)
         vis.add_geometry(self.cloud)
         vis.update_geometry(self.cloud)
         vis.poll_events()
         vis.update_renderer()
         vis.capture_screen_image(".environmentReconstruction/cloud.png", True)
         time.sleep(5)
-        vis.destroy_window()
         o3d.io.write_point_cloud(".environmentReconstruction/temp.ply", self.cloud)
 
 

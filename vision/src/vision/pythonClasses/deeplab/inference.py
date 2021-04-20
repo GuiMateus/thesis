@@ -6,7 +6,7 @@ import os
 import numpy as np
 import time
 
-from 
+ 
 
 
 def main():
@@ -49,7 +49,7 @@ def main():
         else:
             args.sync_bn = False
 
-    model = DeepLab(num_classes=3,
+    model = DeepLab(num_classes=8,
                     backbone=resnet,
                     output_stride=8,
                     sync_bn=False,

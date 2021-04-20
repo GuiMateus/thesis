@@ -2,7 +2,7 @@ import torch.utils.data as data
 
 
 class CombineDBs(data.Dataset):
-    NUM_CLASSES = 3
+    NUM_CLASSES = 8
     def __init__(self, dataloaders, excluded=None):
         self.dataloaders = dataloaders
         self.excluded = excluded

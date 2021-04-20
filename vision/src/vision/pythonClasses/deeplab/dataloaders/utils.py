@@ -1,13 +1,15 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
+import cv2
+
 
 def decode_seg_map_sequence(label_masks, dataset='coco'):
     rgb_masks = []
     for label_mask in label_masks:
         rgb_mask = decode_segmap(label_mask, dataset)
         rgb_masks.append(rgb_mask)
-    # rgb_masks = torch.from_numpy(np.array(rgb_masks).transpose([0, 3, 1, 2]))
+    rgb_masks = torch.from_numpy(np.array(rgb_masks).transpose([0, 3, 1, 2]))
     return rgb_masks
 
 
@@ -22,14 +24,11 @@ def decode_segmap(label_mask, dataset, plot=False):
         (np.ndarray, optional): the resulting decoded color image.
     """
     if dataset == 'pascal' or dataset == 'coco':
-        n_classes = 3
-        label_colours = np.array([[0,0,255], [0, 255, 0], [255, 0, 0]])
+        n_classes = 8
+        label_colours = get_pascal_labels()
     elif dataset == 'cityscapes':
         n_classes = 19
         label_colours = get_cityscapes_labels()
-    elif dataset == 'custom_screws':
-        n_classes = 2
-        label_colours = np.array([[0,255,0], [255, 0, 0]])
     else:
         raise NotImplementedError
 
@@ -37,10 +36,9 @@ def decode_segmap(label_mask, dataset, plot=False):
     g = label_mask.copy()
     b = label_mask.copy()
     for ll in range(0, n_classes):
-        if ll is not 0:
-            r[label_mask == ll] = label_colours[ll, 0]
-            g[label_mask == ll] = label_colours[ll, 1]
-            b[label_mask == ll] = label_colours[ll, 2]
+        r[label_mask == ll] = label_colours[ll, 0]
+        g[label_mask == ll] = label_colours[ll, 1]
+        b[label_mask == ll] = label_colours[ll, 2]
     rgb = np.zeros((label_mask.shape[0], label_mask.shape[1], 3))
     rgb[:, :, 0] = r / 255.0
     rgb[:, :, 1] = g / 255.0
@@ -62,10 +60,12 @@ def encode_segmap(mask):
         a given location is the integer denoting the class index.
     """
     mask = mask.astype(int)
+    print(mask.shape)
     label_mask = np.zeros((mask.shape[0], mask.shape[1]), dtype=np.int16)
     for ii, label in enumerate(get_pascal_labels()):
         label_mask[np.where(np.all(mask == label, axis=-1))[:2]] = ii
     label_mask = label_mask.astype(int)
+    print(label_mask)
     return label_mask
 
 
@@ -97,9 +97,4 @@ def get_pascal_labels():
     Returns:
         np.ndarray with dimensions (21, 3)
     """
-    return np.asarray([[0, 0, 0], [128, 0, 0], [0, 128, 0], [128, 128, 0],
-                       [0, 0, 128], [128, 0, 128], [0, 128, 128], [128, 128, 128],
-                       [64, 0, 0], [192, 0, 0], [64, 128, 0], [192, 128, 0],
-                       [64, 0, 128], [192, 0, 128], [64, 128, 128], [192, 128, 128],
-                       [0, 64, 0], [128, 64, 0], [0, 192, 0], [128, 192, 0],
-                       [0, 64, 128]])
+    return np.asarray([[0,0,255], [0, 255, 0], [255, 0, 0], [30,25,100], [60, 0, 140], [0, 50, 134], [50, 50, 50], [3, 50, 50]])

@@ -301,7 +301,7 @@ def get_10x_lr_params(model):
 
 
 if __name__ == "__main__":
-    model = DeepLabv3_plus(nInputChannels=3, n_classes=3, os=16, pretrained=True, _print=True)
+    model = DeepLabv3_plus(nInputChannels=3, n_classes=8, os=16, pretrained=True, _print=True)
     model.eval()
     image = torch.randn(1, 3, 129, 129)
     with torch.no_grad():

@@ -13,8 +13,8 @@ ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 
 class COCOSegmentation(Dataset):
-    NUM_CLASSES = 3
-    CAT_LIST = [0, 1, 2]
+    NUM_CLASSES = 8
+    CAT_LIST = [0, 1, 2, 3, 4, 5, 6, 7]
 
     def __init__(self,
                  args,

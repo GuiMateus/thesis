@@ -59,13 +59,13 @@ class visionCentral():
     def initializeDeepLab(self):
         """Load DeepLabV3 weights
         """
-        try:
-            print(f"{bcolors.OKCYAN} Now attempting to load segmentation model and weights.{bcolors.ENDC}")
-            dl = segmentationInit()
-            self.segModel, self.imageNorm = dl.deeplabInit()
-            print(f"{bcolors.OKGREEN}Segmentation model and weights loaded successfully, you can now use the models.{bcolors.ENDC}")
-        except:
-            print(f"{bcolors.WARNING}An error occured whiel loading the segmentation weights and model, are the paths correct?{bcolors.ENDC}")
+        # try:
+        print(f"{bcolors.OKCYAN} Now attempting to load segmentation model and weights.{bcolors.ENDC}")
+        dl = segmentationInit()
+        self.segModel, self.imageNorm = dl.deeplabInit()
+        print(f"{bcolors.OKGREEN}Segmentation model and weights loaded successfully, you can now use the models.{bcolors.ENDC}")
+        # except:
+        #     print(f"{bcolors.WARNING}An error occured whiel loading the segmentation weights and model, are the paths correct?{bcolors.ENDC}")
 
     def getImage(self):
         """Gets images from the rospy realsense sdk
@@ -111,7 +111,7 @@ class visionCentral():
         self.i += 1
         # Segment all the cropped objects
         if len(tensorArray) > 0:
-            masks = dl.inference(self.segModel, tensorArray, self.i)
+            masks = dl.inference(self.segModel, tensorArray)
             feedback, masksOutput = dl.toImgCoord(masks, depthImage, feedback)
             crops = dl.getCrops()
             return feedback, masksOutput, crops
@@ -142,6 +142,9 @@ class visionCentral():
         # Semantic segmentation
         visualFeedbackMasks, maskArray, crops = self.useDeepLab(segmentationImage, incomingDepth, detections, segmentationImage)
 
+        cv2.imwrite(".environmentReconstruction/detections.png", visualFeedbackObjects)
+
+
         if maskArray is not None and len(maskArray) != 0:
             stringMsg = String()
             detectionsMsg = vision_detectResponse()
@@ -152,7 +155,6 @@ class visionCentral():
 
             pp.pointCloudGenerate(visualFeedbackMasks, incomingDepth)
             pp.saveCloud(self.pointCloudFileName)
-            cv2.imwrite(".environmentReconstruction/detections.png", visualFeedbackObjects)
             cv2.imwrite(".environmentReconstruction/masks.png", visualFeedbackMasks)
             return detectionsMsg
     

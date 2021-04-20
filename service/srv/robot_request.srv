@@ -1,2 +1,3 @@
+std_msgs/String reconstruction_type
 ---
 sensor_msgs/PointCloud2 world_semantics

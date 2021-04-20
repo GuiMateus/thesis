@@ -7,7 +7,7 @@ from .decoder import build_decoder
 from .backbone import build_backbone
 
 class DeepLab(nn.Module):
-    def __init__(self, backbone='resnet', output_stride=16, num_classes=3,
+    def __init__(self, backbone='resnet', output_stride=16, num_classes=8,
                  sync_bn=True, freeze_bn=False):
         super(DeepLab, self).__init__()
         if backbone == 'drn':
@@ -72,7 +72,7 @@ class DeepLab(nn.Module):
                                 yield p
 
 if __name__ == "__main__":
-    model = DeepLab(backbone='mobilenet', output_stride=16)
+    model = DeepLab(backbone='mobilenet', output_stride=8)
     model.eval()
     input = torch.rand(1, 3, 129, 129)
     output = model(input)

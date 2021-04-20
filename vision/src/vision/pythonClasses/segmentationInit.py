@@ -1,5 +1,6 @@
 import torch
 import cv2
+import matplotlib as plt
 from .imageManipulation import imageManipulation
 from .acquireData import acquireImage
 from .pointCloudProcessing import pointCloudProcessing
@@ -19,7 +20,7 @@ class segmentationInit():
         """segmentationInit class constructor
         """
         self.crops = []
-        self.deepLabDimensions = (64,64)
+        self.deepLabDimensions = (128,128)
         self.newBbox = []
 
 
@@ -31,15 +32,17 @@ class segmentationInit():
             DeepLab, Compose: Network model, Normalization method
         """
         # Load the DeepLabV3 model with a Resnet101 backbone
-        model = DeepLab(num_classes=3,
+        model = DeepLab(num_classes=8,
             backbone='resnet',
             output_stride=8,
             sync_bn=False,
             freeze_bn=False)
+        
+        print(model)
 
         # Load the weights for DeepLabV3 trained on different types of screws
         weights = torch.load('/opt/vision/weights/deeplab/model_best.pth.tar', map_location='cpu')
-        model.load_state_dict(weights['state_dict'])
+        model.load_state_dict(weights['state_dict'], strict=False)
         model.eval()
 
         ##### PC CANT HANDLE WHILE RUNNING YOLO ALSO, BIG SAD :(((((( #####
@@ -54,7 +57,7 @@ class segmentationInit():
         return model, normalizeImage
 
 
-    def inference(self, model, tensorArray, i):
+    def inference(self, model, tensorArray):
         """Inference for semantic segmentation
 
         Args:
@@ -70,15 +73,31 @@ class segmentationInit():
         # Run inference on all images
         for tensor in tensorArray:
             with torch.no_grad():
-                # print(type(tensor[0]))
+                normalizedMask = []
                 output = model(tensor[0])
-                prediction = torch.max(output.data, 1)[1].numpy()
-                # outputArray = prediction.numpy()
-                result = np.where(prediction == 1)
+
+                # prediction = torch.max(output.data, 1)[1].numpy()
+                # # outputArray = prediction.numpy()
+                # result = np.where(prediction == 1)
                 # print(result)
 
-                outputMax = decode_seg_map_sequence(torch.max(output[:3], 1)[1].detach().cpu().numpy())
-                masks.append(outputMax)
+
+
+                experiments = make_grid(decode_seg_map_sequence(torch.max(output[:3], 1)[1].detach().cpu().numpy()), 3, normalize=False, range=(0, 255))
+
+
+                # outputMax = decode_seg_map_sequence(torch.max(output[:3], 1)[1].detach().cpu().numpy())
+                numpyMask = experiments.numpy()
+                print(numpyMask.shape)
+                
+                finalMask = numpyMask.transpose([1, 2, 0])
+                finalMask = finalMask[np.newaxis, :]
+                print(finalMask.shape)
+                normalizedMask = np.zeros((128, 128))
+                normalizedMask = cv2.normalize(finalMask,  normalizedMask, 0, 255, cv2.NORM_MINMAX)
+                print(normalizedMask)
+                masks.append(finalMask)
+
         return masks
 
 
@@ -111,6 +130,8 @@ class segmentationInit():
                 currentMask = masks[i][0].astype('uint8') * 255
                 
                 currentMask = cv2.resize(currentMask, (int(xmax-xmin), int(ymax-ymin)))
+
+                cv2.imwrite("imagep.png", currentMask)
                 
                 # cv2.imwrite("/home/gui/mask.png", currentMask)
                 # roiDepth = depth[ymin:ymax, xmin:xmax]
@@ -143,6 +164,7 @@ class segmentationInit():
 
     def handleObjectCropping(self, inputImage, detections):
         # depthImageCV = inputDepthImage.astype(np.float32)
+        tempVec = []
         if detections is not None:
             for label, confidence, bbox in detections:
                 croppedImage = self.cropObjects(inputImage, bbox)
@@ -151,6 +173,8 @@ class segmentationInit():
                     croppedImage = cv2.resize(croppedImage, self.deepLabDimensions)
                     self.crops.append([croppedImage, label, confidence, self.newBbox, inputImage.shape[0], inputImage.shape[1]])
                     label = str(label)
+                    tempVec.append(croppedImage)
+            return tempVec
 
 
     def cropObjects(self, image, bbox):

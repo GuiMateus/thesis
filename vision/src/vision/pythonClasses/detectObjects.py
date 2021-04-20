@@ -92,7 +92,7 @@ class yoloInit():
             (list): List of detections updated to contain pixel coordinates of original image space
         """
         # Constant value for the minimum accepted confidence value for detections
-        CONFIDENCEVALUE = 90
+        CONFIDENCEVALUE = 75
         detectionsOriginal = []
 
         im = imageManipulation()
