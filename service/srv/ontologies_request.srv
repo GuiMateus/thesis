@@ -1,0 +1,3 @@
+std_msgs/String staticObject
+std_msgs/String dynamicObject
+---

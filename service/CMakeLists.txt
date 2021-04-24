@@ -54,6 +54,7 @@ find_package(catkin REQUIRED std_msgs message_generation message_runtime sensor_
      FILES
      vision_detect.srv
      robot_request.srv
+     ontologies_request.srv
  )
 
 ## Generate actions in the 'action' folder
