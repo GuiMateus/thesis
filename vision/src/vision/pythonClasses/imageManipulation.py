@@ -125,6 +125,10 @@ class imageManipulation():
         jsonArray = []
         for detection in detections:
             x, y, w, h = detection[3]
+            print(x)
+            print(y)
+            print(w)
+            print(h)
 
             buildJson = {
                 "label": str(detection[1]),

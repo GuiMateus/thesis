@@ -4,7 +4,7 @@ import torch
 import cv2
 
 
-def decode_seg_map_sequence(label_masks, dataset='coco'):
+def decode_seg_map_sequence(label_masks, dataset='pascal'):
     rgb_masks = []
     for label_mask in label_masks:
         rgb_mask = decode_segmap(label_mask, dataset)

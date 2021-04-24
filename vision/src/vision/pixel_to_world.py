@@ -33,7 +33,8 @@ class pixel_to_world():
         encoded_colors = np.cast[np.float32](encoded_colors)
         return encoded_colors
 
-    def get_point(self, msg, x, y):        
+    def get_point(self, msg, x, y):
+       
         depth = pc2.read_points(msg, field_names=(
             "x", "y", "z"), skip_nans=True, uvs=[
                                             (x, y)])  # Questionable
@@ -85,7 +86,7 @@ class pixel_to_world():
 
         strMsg = visionResponse.image_detections
         stringDetections = strMsg.data
-
+        print(stringDetections)
         detections = im.json2bbox(stringDetections)
         # cv2.imwrite("/home/gui/aa.png", pixelPoint)
        

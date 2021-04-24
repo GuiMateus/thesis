@@ -48,13 +48,13 @@ class visionCentral():
     def initializeYOLO(self):
         """Load YOLOv4 weights
         """
-        try:
-            print(f"{bcolors.OKCYAN}Attempting to load object detector.{bcolors.ENDC}")
-            yl = yoloInit()
-            self.structure, self.classes, self.colour = yl.initialiseNetwork()
-            print(f"{bcolors.OKGREEN}Object detector successfully loaded.{bcolors.ENDC}")
-        except:
-            print(f"{bcolors.WARNING}An error occured while loading the object detector, are the paths to weights, model, and cfg correct?{bcolors.ENDC}")
+        # try:
+        print(f"{bcolors.OKCYAN}Attempting to load object detector.{bcolors.ENDC}")
+        yl = yoloInit()
+        self.structure, self.classes, self.colour = yl.initialiseNetwork()
+        print(f"{bcolors.OKGREEN}Object detector successfully loaded.{bcolors.ENDC}")
+        # except:
+        #     print(f"{bcolors.WARNING}An error occured while loading the object detector, are the paths to weights, model, and cfg correct?{bcolors.ENDC}")
 
     def initializeDeepLab(self):
         """Load DeepLabV3 weights
@@ -135,6 +135,7 @@ class visionCentral():
         incomingImage, incomingDepth = self.getImage()
         yoloImage = incomingImage.copy()
         segmentationImage = incomingImage.copy()
+
 
         # Object detection
         visualFeedbackObjects, detections = self.useYOLO(yoloImage)

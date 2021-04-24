@@ -183,7 +183,7 @@ class ASPP_module(nn.Module):
 
 
 class DeepLabv3_plus(nn.Module):
-    def __init__(self, nInputChannels=3, n_classes=21, os=16, pretrained=False, freeze_bn=False, _print=True):
+    def __init__(self, nInputChannels=3, n_classes=8, os=16, pretrained=False, freeze_bn=False, _print=True):
         if _print:
             print("Constructing DeepLabv3+ model...")
             print("Backbone: Resnet-101")

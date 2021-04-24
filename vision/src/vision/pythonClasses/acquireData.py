@@ -16,7 +16,7 @@ class acquireImage():
     def getROSImage(self):
         """Wait for images
         """
-        self.rosImage = rospy.wait_for_message("/camera/color/image_rect_color", Image, timeout=100)
+        self.rosImage = rospy.wait_for_message("/camera/color/image_rect_color", Image, timeout=11)
         self.cvImage = img.image_to_numpy(self.rosImage)
         self.cvImage = img.bgr_to_rgb(self.cvImage)
         return self.cvImage
@@ -25,6 +25,6 @@ class acquireImage():
     def getROSDepthImage(self):
         """Wait for depth images
         """
-        msg = rospy.wait_for_message("/camera/depth/image_rect_raw", Image, timeout=100)
+        msg = rospy.wait_for_message("/camera/depth/image_rect_raw", Image, timeout=11)
         self.cvDepthImage = np.frombuffer(msg.data, dtype=np.uint16).reshape(msg.height, msg.width, -1)
         return self.cvDepthImage

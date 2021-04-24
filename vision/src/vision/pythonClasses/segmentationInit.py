@@ -96,7 +96,7 @@ class segmentationInit():
                 normalizedMask = np.zeros((128, 128))
                 normalizedMask = cv2.normalize(finalMask,  normalizedMask, 0, 255, cv2.NORM_MINMAX)
                 print(normalizedMask)
-                masks.append(finalMask)
+                masks.append(normalizedMask)
 
         return masks
 

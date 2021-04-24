@@ -25,8 +25,8 @@ class pointCloudProcessing():
             fy = self.intrinsicMatrix[1,1]
             cx = self.intrinsicMatrix[0,2]
             cy = self.intrinsicMatrix[1,2]
-            w = 640
-            h = 480
+            w = 1280
+            h = 720
             intrinsicsObj = o3d.camera.PinholeCameraIntrinsic()
 
             intrinsicsObj.set_intrinsics(w, h, fx, fy, cx, cy)
@@ -47,6 +47,7 @@ class pointCloudProcessing():
             return None
     
     def saveCloud(self, fileName):
+        o3d.visualization.draw_geometries([self.cloud])
         vis = o3d.visualization.Visualizer()
         vis.create_window(window_name="CloudSaverWindow", width=1280, height=720, visible=False)
         vis.add_geometry(self.cloud)
@@ -70,7 +71,7 @@ class pointCloudProcessing():
 
         # pcd_tree = o3d.geometry.KDTreeFlann(pointCloud)
 
-        # o3d.visualization.draw_geometries([octreeData])
+        o3d.visualization.draw_geometries([pointCloud])
 
 
         # o3d.io.write_point_cloud("/home/gui/octree.ply", octreeData)

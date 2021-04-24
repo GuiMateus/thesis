@@ -67,8 +67,8 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     args = parser.parse_args()
-    args.base_size = 129
-    args.crop_size = 129
+    args.base_size = 128
+    args.crop_size = 128
 
     pascal_voc_val = pascal.VOCSegmentation(args, split='val')
     sbd = sbd.SBDSegmentation(args, split=['train', 'val'])

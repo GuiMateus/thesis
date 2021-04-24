@@ -3,7 +3,6 @@ import os
 from PIL import Image
 import numpy as np
 from torch.utils.data import Dataset
-from ...mypath import Path
 from torchvision import transforms
 from .. import custom_transforms as tr
 
@@ -11,11 +10,11 @@ class VOCSegmentation(Dataset):
     """
     PascalVoc dataset
     """
-    NUM_CLASSES = 21
+    NUM_CLASSES = 8
 
     def __init__(self,
                  args,
-                 base_dir=Path.db_root_dir('pascal'),
+                 base_dir="/user/student.aau.dk/gmateu16/Pascal_Data",
                  split='train',
                  ):
         """
@@ -47,10 +46,10 @@ class VOCSegmentation(Dataset):
                 lines = f.read().splitlines()
 
             for ii, line in enumerate(lines):
-                _image = os.path.join(self._image_dir, line + ".jpg")
-                _cat = os.path.join(self._cat_dir, line + ".png")
-                assert os.path.isfile(_image)
-                assert os.path.isfile(_cat)
+                _image = "/user/student.aau.dk/gmateu16/Pascal_Data/JPEGImages/" + line + ".jpg"
+                _cat = "/user/student.aau.dk/gmateu16/Pascal_Data/SegmentationClassPNG/" + line + ".png"
+                # assert os.path.isfile(_image)
+                # assert os.path.isfile(_cat)
                 self.im_ids.append(line)
                 self.images.append(_image)
                 self.categories.append(_cat)
@@ -112,8 +111,8 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     args = parser.parse_args()
-    args.base_size = 513
-    args.crop_size = 513
+    args.base_size = 128
+    args.crop_size = 128
 
     voc_train = VOCSegmentation(args, split='train')
 

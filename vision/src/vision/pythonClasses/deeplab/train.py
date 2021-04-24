@@ -185,17 +185,17 @@ def main():
     parser.add_argument('--dataset', type=str, default='pascal',
                         choices=['pascal', 'coco', 'cityscapes'],
                         help='dataset name (default: pascal)')
-    parser.add_argument('--use-sbd', action='store_true', default=True,
+    parser.add_argument('--use-sbd', action='store_true', default=False,
                         help='whether to use SBD dataset (default: True)')
     parser.add_argument('--workers', type=int, default=4,
                         metavar='N', help='dataloader threads')
-    parser.add_argument('--base-size', type=int, default=129,
+    parser.add_argument('--base-size', type=int, default=128,
                         help='base image size')
-    parser.add_argument('--crop-size', type=int, default=129,
+    parser.add_argument('--crop-size', type=int, default=128,
                         help='crop image size')
     parser.add_argument('--sync-bn', type=bool, default=None,
                         help='whether to use sync bn (default: auto)')
-    parser.add_argument('--freeze-bn', type=bool, default=False,
+    parser.add_argument('--freeze-bn', type=bool, default=True,
                         help='whether to freeze bn parameters (default: False)')
     parser.add_argument('--loss-type', type=str, default='ce',
                         choices=['ce', 'focal'],
@@ -239,7 +239,7 @@ def main():
     parser.add_argument('--checkname', type=str, default=None,
                         help='set the checkpoint name')
     # finetuning pre-trained models
-    parser.add_argument('--ft', action='store_true', default=False,
+    parser.add_argument('--ft', action='store_true', default=True,
                         help='finetuning on a different dataset')
     # evaluation option
     parser.add_argument('--eval-interval', type=int, default=1,
