@@ -20,7 +20,7 @@ class segmentationInit():
         """segmentationInit class constructor
         """
         self.crops = []
-        self.deepLabDimensions = (128,128)
+        self.deepLabDimensions = (512,512)
         self.newBbox = []
 
 

@@ -123,15 +123,15 @@ class pixel_to_world():
                 json.dump(jsonObject, outfile)
 
             nullPoint = worldPoints
-            temp = Point32()
-            nullPoint.world_semantics.append(temp)
+            # temp = Point32()
+            # nullPoint.world_semantics.append(temp)
             print("Done!")
             return worldPoints
 
         else:
             nullPoint = worldPoints
-            temp = Point32()
-            nullPoint.world_semantics.points.append(temp)
+            # temp = Point32()
+            # nullPoint.world_semantics.points.append(temp)
             return nullPoint
             
 def main():

@@ -47,7 +47,7 @@ class pointCloudProcessing():
             return None
     
     def saveCloud(self, fileName):
-        o3d.visualization.draw_geometries([self.cloud])
+        # o3d.visualization.draw_geometries([self.cloud])
         vis = o3d.visualization.Visualizer()
         vis.create_window(window_name="CloudSaverWindow", width=1280, height=720, visible=False)
         vis.add_geometry(self.cloud)

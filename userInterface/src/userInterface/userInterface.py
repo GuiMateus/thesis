@@ -16,43 +16,48 @@ class userInterface():
         self.dynamicObjectClassesAll = []
         self.staticObjectClasses = []
         self.objectPicked = -1
+        self.AAULogo = []
 
     def interfaceCallback(self):
         # First the window layout in 2 column
         # Fr now will only show the name of the file that was chosen
-        sg.theme('DarkAmber')
+        sg.theme('DarkTeal12')
         detector_tab = [
-                [sg.Text("Bounding boxes of objects detected in the environment.")],
-                [sg.Image(key="-DETECTOR-")],
+            [sg.Text("Bounding boxes of objects detected in the environment.", font='Courier 14')],
+            [sg.Image(key="-DETECTOR-")],
         ]
         segment_tab = [
-            [sg.Text("Object masks detected in the environment.")],
+            [sg.Text("Object masks detected in the environment.", font='Courier 14')],
             [sg.Image(key="-SEGMENT-")],
         ]
         cloud_tab = [
 
-            [sg.Text("3D Pointcloud reconstruction of the environment.")],
+            [sg.Text("3D Pointcloud reconstruction of the environment.", font='Courier 14')],
             [sg.Image(key="-RECONSTRUCT-")],
         ]
         ontology = [
-            [sg.Text("Assign dynamically detected objects with static object classes.")],
+            [sg.Text("Assign dynamically detected objects with static object classes.", font='Courier 14')],
             # *[[sg.Text(objectClass, font='Courier 14'),] for objectClass in self.dynamicObjectClasses], 
-            [sg.Listbox(list(self.dynamicObjectClasses), size=(30,20), enable_events=False, font='Courier 14'), sg.Listbox(list(self.staticObjectClasses), size=(30,20), enable_events=False, font='Courier 14')],
+            [sg.Listbox(list(self.dynamicObjectClasses), size=(30,20), enable_events=False, font='Courier 14', pad=(100,100)), sg.Button('Save Ontology', font='Courier 14'), sg.Listbox(list(self.staticObjectClasses), size=(30,20), enable_events=False, font='Courier 14', pad=(100,100))],
         ]
         
         # ----- Full layout -----
         layout = [
-            [   sg.Button('Offline Reconstruction'),
-                sg.Listbox(list(self.dynamicObjectClassesAll), size=(30,4), enable_events=False, tooltip='Specify which object should be included in online reconstruction. To include all objects, select "All".'),          
-                sg.Button('Online Reconstruction'),
-                sg.Button('Save Ontology'),
+            [   
+                sg.Image(filename="/opt/vision/aau.png", pad=(75,0)),
+                sg.Button('Offline Reconstruction', pad=(50,0), font='Courier 14'),
+                # sg.Listbox(list(self.dynamicObjectClassesAll), size=(30,4), enable_events=False, tooltip='Specify which object should be included in online reconstruction. To include all objects, select "All".'),          
+                sg.Button('Online Reconstruction', pad=(50,0), font='Courier 14'),
+                sg.Image(filename="/opt/vision/lhLogo.png", pad=(75,10))
             ],
-            [sg.TabGroup([[
+            [
+                sg.TabGroup([[
                 sg.Tab('Object Detection', detector_tab, tooltip = 'Shows the objects detected.'),
                 sg.Tab('Object Segmentation', segment_tab, tooltip = 'Shows the object masks.'),
                 sg.Tab('3D Reconstruction', cloud_tab, tooltip = 'Shows the 3D reconstruction of the environment.'),
-                sg.Tab('Create ontology relations', ontology, tooltip = 'Create object ontologies between static and dynamic object classes.')
-            ]])
+                sg.Tab('Create ontology relations', ontology, tooltip = 'Create object ontologies between static and dynamic object classes.'),
+                
+            ]], font='Courier 14')
             ]
         ]
         window = sg.Window("3D Reconstruction GUI", layout)
@@ -60,7 +65,6 @@ class userInterface():
 
         while True:
             event, values = window.read(timeout=1)
-            print(values)
             if event == "Exit" or event == sg.WIN_CLOSED:
                 break
             if event == "Offline Reconstruction":
@@ -91,19 +95,22 @@ class userInterface():
         os.system("rosservice call /robotRequest '{reconstruction_type: {data: online}}'")
     
     def getObjectClasses(self):
-        with open('/opt/vision/yoloConfig/static.names', 'r') as file:
+        with open('/opt/vision/yoloConfig/dynamicEnvironment.names', 'r') as file:
             content = file.readlines()
             for objectClass in content:
                 fixedClass = objectClass.replace('\n', '')
                 self.staticObjectClasses.append(fixedClass)
     
-        with open('/opt/vision/yoloConfig/dynamic.names', 'r') as file:
+        with open('/opt/vision/yoloConfig/dynamicEnvironment.names', 'r') as file:
             content = file.readlines()
             self.dynamicObjectClassesAll.append("All")
             for objectClass in content:
                 fixedClass = objectClass.replace('\n', '')
                 self.dynamicObjectClasses.append(fixedClass)
                 self.dynamicObjectClassesAll.append(fixedClass)
+    
+    def getLogos(self):
+        self.AAULogo = cv2.imread("/opt/vision/aau.png")
     
 
 
