@@ -6,6 +6,7 @@ import cv2
 import time
 import json
 import numpy as np
+import matplotlib as plt
 
 from pythonClasses.pointCloudProcessing import pointCloudProcessing
 from pythonClasses.acquireData import acquireImage
@@ -41,7 +42,6 @@ class visionCentral():
         self.i = 0
         self.timeCount = 0
         self.segModel = []
-        self.imageNorm = []
         self.seq = 0
         self.pointCloudFileName = "/opt/vision/staticEnvironment/environmentCloud.ply"
 
@@ -62,7 +62,7 @@ class visionCentral():
         # try:
         print(f"{bcolors.OKCYAN} Now attempting to load segmentation model and weights.{bcolors.ENDC}")
         dl = segmentationInit()
-        self.segModel, self.imageNorm = dl.deeplabInit()
+        self.segModel = dl.deeplabInit()
         print(f"{bcolors.OKGREEN}Segmentation model and weights loaded successfully, you can now use the models.{bcolors.ENDC}")
         # except:
         #     print(f"{bcolors.WARNING}An error occured whiel loading the segmentation weights and model, are the paths correct?{bcolors.ENDC}")
@@ -107,7 +107,8 @@ class visionCentral():
         # Crop input image into sub-regions based on the information from object detection
         dl.handleObjectCropping(segImage, detections)
         # Convert np.arrays to PyTorch tensors
-        tensorArray = dl.imageToTensor(self.imageNorm)
+        tensorArray = dl.imageToTensor()
+
         self.i += 1
         # Segment all the cropped objects
         if len(tensorArray) > 0:

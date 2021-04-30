@@ -31,7 +31,7 @@ class pointCloudProcessing():
 
             intrinsicsObj.set_intrinsics(w, h, fx, fy, cx, cy)
 
-            cv2.cvtColor(rgbImage, cv2.COLOR_BGR2RGB)
+            rgbImage = cv2.cvtColor(rgbImage, cv2.COLOR_BGR2RGB)
             imgo3d = o3d.geometry.Image(rgbImage.astype(np.uint8))
             depth3d = o3d.geometry.Image(depthImage.astype(np.float32))
 

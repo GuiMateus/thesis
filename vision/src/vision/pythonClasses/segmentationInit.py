@@ -1,6 +1,6 @@
 import torch
 import cv2
-import matplotlib as plt
+import sys
 from .imageManipulation import imageManipulation
 from .acquireData import acquireImage
 from .pointCloudProcessing import pointCloudProcessing
@@ -10,6 +10,8 @@ from torchvision import transforms
 from .deeplab.dataloaders.utils import  *
 from torchvision.utils import make_grid, save_image
 from .deeplab.dataloaders import custom_transforms as tr
+from . import img
+from tensorboardX import SummaryWriter
 
 
 
@@ -20,8 +22,10 @@ class segmentationInit():
         """segmentationInit class constructor
         """
         self.crops = []
-        self.deepLabDimensions = (512,512)
+        self.deepLabDimensions = (256,256)
         self.newBbox = []
+        self.mean=(0.485, 0.456, 0.406)
+        self.std=(0.229, 0.224, 0.225)
 
 
 
@@ -32,17 +36,31 @@ class segmentationInit():
             DeepLab, Compose: Network model, Normalization method
         """
         # Load the DeepLabV3 model with a Resnet101 backbone
-        model = DeepLab(num_classes=8,
+        model = DeepLab(num_classes=9,
             backbone='resnet',
             output_stride=8,
-            sync_bn=False,
-            freeze_bn=False)
+            sync_bn=None,
+            freeze_bn=True)
         
         print(model)
 
         # Load the weights for DeepLabV3 trained on different types of screws
-        weights = torch.load('/opt/vision/weights/deeplab/model_best.pth.tar', map_location='cpu')
-        model.load_state_dict(weights['state_dict'], strict=False)
+
+
+        
+
+        weights = torch.load('/home/gui/Documents/dynamicEnvironment/model_best.pth.tar', map_location='cpu')['state_dict']
+
+        from collections import OrderedDict
+        new_state_dict = OrderedDict()
+        for k, v in weights.items():
+            name = k.replace("module.", "") # remove 'module.' of dataparallel
+            new_state_dict[name]=v
+
+        state_dict = new_state_dict
+
+        model.load_state_dict(state_dict)
+        
         model.eval()
 
         ##### PC CANT HANDLE WHILE RUNNING YOLO ALSO, BIG SAD :(((((( #####
@@ -51,10 +69,8 @@ class segmentationInit():
         # print("4")
         
         # Create a compose on how the input images should be normalized
-        normalizeImage = transforms.Compose([
-            tr.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
-            tr.ToTensor()])
-        return model, normalizeImage
+        
+        return model
 
 
     def inference(self, model, tensorArray):
@@ -68,6 +84,7 @@ class segmentationInit():
         ##### PC CANT HANDLE WHILE RUNNING YOLO ALSO, BIG SAD :(((((( #####
         # if torch.cuda.is_available():
         #     self.tensor_in = self.tensor_in.cuda()
+
     
         masks = []
         # Run inference on all images
@@ -76,27 +93,15 @@ class segmentationInit():
                 normalizedMask = []
                 output = model(tensor[0])
 
-                # prediction = torch.max(output.data, 1)[1].numpy()
-                # # outputArray = prediction.numpy()
-                # result = np.where(prediction == 1)
-                # print(result)
+                experiments = make_grid(decode_seg_map_sequence(torch.max(output[:3], 1)[1].detach().cpu().numpy(), dataset="pascal"), 3, normalize=False, range=(0, 255))
 
 
-
-                experiments = make_grid(decode_seg_map_sequence(torch.max(output[:3], 1)[1].detach().cpu().numpy()), 3, normalize=False, range=(0, 255))
-
-
-                # outputMax = decode_seg_map_sequence(torch.max(output[:3], 1)[1].detach().cpu().numpy())
                 numpyMask = experiments.numpy()
-                print(numpyMask.shape)
+                print("inference")
                 
                 finalMask = numpyMask.transpose([1, 2, 0])
                 finalMask = finalMask[np.newaxis, :]
-                print(finalMask.shape)
-                normalizedMask = np.zeros((128, 128))
-                normalizedMask = cv2.normalize(finalMask,  normalizedMask, 0, 255, cv2.NORM_MINMAX)
-                print(normalizedMask)
-                masks.append(normalizedMask)
+                masks.append(finalMask)
 
         return masks
 
@@ -131,14 +136,8 @@ class segmentationInit():
                 
                 currentMask = cv2.resize(currentMask, (int(xmax-xmin), int(ymax-ymin)))
 
-                cv2.imwrite("imagep.png", currentMask)
-                
-                # cv2.imwrite("/home/gui/mask.png", currentMask)
-                # roiDepth = depth[ymin:ymax, xmin:xmax]
-
-                # pc.filterMasks(currentMask, roiDepth)
-
                 maskGrey = cv2.cvtColor(currentMask,cv2.COLOR_BGR2GRAY)
+                print("to image!!")
 
                 # Check if mask is not empty
                 if cv2.countNonZero(maskGrey) is not 0:
@@ -198,7 +197,7 @@ class segmentationInit():
         return cropped
 
 
-    def imageToTensor(self, normalize):
+    def imageToTensor(self):
         """Create a tensors from the cropped images
 
         Args:
@@ -207,17 +206,34 @@ class segmentationInit():
         Returns:
             torch.tensor[]: Returns an array of tensors from the cropped regions 
         """
+
         tensorArray = []
         for croppedIndex in self.crops:
             # Convert arrays into PIL.image
-            image = Image.fromarray(croppedIndex[0]).convert('RGB')
-            target = Image.fromarray(croppedIndex[0]).convert('L')
-
             # Create tensor
-            sample = {'image': image, 'label': target}
-            tensor = normalize(sample)['image'].unsqueeze(0)
+            tensor = self.normalizeImages(croppedIndex[0])
+            tensor = self.toTensor(tensor).unsqueeze(0)
             tensorArray.append([tensor, croppedIndex[1], croppedIndex[2], croppedIndex[3], croppedIndex[4], croppedIndex[5]])
         return tensorArray
+
+    def toTensor(self, img):
+        # swap color axis because
+        # numpy image: H x W x C
+        # torch image: C X H X W
+        img = img.astype(np.float32).transpose((2, 0, 1))
+
+        img = torch.from_numpy(img).float()
+        
+        return img
+
+    def normalizeImages (self, img):
+        img = img.astype(np.float32)
+        img /= 255.0
+        img -= self.mean
+        img /= self.std
+        return img
+
+        
     
     def getCrops(self):
         return self.crops
