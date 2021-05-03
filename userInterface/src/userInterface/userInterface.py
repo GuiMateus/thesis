@@ -5,7 +5,7 @@ import PySimpleGUI as sg
 import cv2
 import os
 from std_msgs.msg import String
-from service.srv import vision_detect, robot_request
+from service.srv import vision_detect, robot_request, ontologies_request
 from vision.pythonClasses.imageManipulation import imageManipulation
 
 
@@ -38,7 +38,7 @@ class userInterface():
         ontology = [
             [sg.Text("Assign dynamically detected objects with static object classes.", font='Courier 14')],
             # *[[sg.Text(objectClass, font='Courier 14'),] for objectClass in self.dynamicObjectClasses], 
-            [sg.Listbox(list(self.dynamicObjectClasses), size=(30,20), enable_events=False, font='Courier 14', pad=(100,100)), sg.Button('Save Ontology', font='Courier 14'), sg.Listbox(list(self.staticObjectClasses), size=(30,20), enable_events=False, font='Courier 14', pad=(100,100))],
+            [sg.Listbox(list(self.dynamicObjectClasses), size=(30,20), enable_events=False, font='Courier 14', pad=(100,100), key="-STATIC-"), sg.Button('Save Ontology', font='Courier 14'), sg.Listbox(list(self.staticObjectClasses), size=(30,20), enable_events=False, font='Courier 14', pad=(100,100), key="-DYNAMIC-")],
         ]
         
         # ----- Full layout -----
@@ -65,6 +65,8 @@ class userInterface():
 
         while True:
             event, values = window.read(timeout=1)
+            print(values)
+
             if event == "Exit" or event == sg.WIN_CLOSED:
                 break
             if event == "Offline Reconstruction":
@@ -72,7 +74,7 @@ class userInterface():
             if event == "Online Reconstruction":
                 self.callOnlineService()
             if event == "Save Ontology":
-                print("plz")
+                self.callObjectOntologies(values["-STATIC-"], values["-DYNAMIC-"])
             # Folder name was filled in, make a list of files in the folder
             try:
                 window["-DETECTOR-"].update(
@@ -84,7 +86,18 @@ class userInterface():
 
             except:
                 pass
-    
+
+    def callObjectOntologies(self, staticObject, dynamicObject):
+        inputMessageStatic = String()
+        inputMessageDynamic = String()
+
+        inputMessageStatic.data = str(staticObject[0])
+        inputMessageDynamic.data = str(dynamicObject[0])
+
+        ontologiesService = rospy.ServiceProxy('ontologiesRequest', ontologies_request)
+        ontologiesService(inputMessageDynamic, inputMessageStatic)
+
+
     def callOfflineService(self):
         inputMessage = String()
         inputMessage.data = "offline"
@@ -95,15 +108,14 @@ class userInterface():
         os.system("rosservice call /robotRequest '{reconstruction_type: {data: online}}'")
     
     def getObjectClasses(self):
-        with open('/opt/vision/yoloConfig/dynamicEnvironment.names', 'r') as file:
+        with open('/opt/vision/yoloConfig/staticEnvironment.names', 'r', encoding='utf-8-sig') as file:
             content = file.readlines()
             for objectClass in content:
                 fixedClass = objectClass.replace('\n', '')
                 self.staticObjectClasses.append(fixedClass)
     
-        with open('/opt/vision/yoloConfig/dynamicEnvironment.names', 'r') as file:
+        with open('/opt/vision/yoloConfig/dynamicEnvironment.names', 'r', encoding='utf-8-sig') as file:
             content = file.readlines()
-            self.dynamicObjectClassesAll.append("All")
             for objectClass in content:
                 fixedClass = objectClass.replace('\n', '')
                 self.dynamicObjectClasses.append(fixedClass)
@@ -111,6 +123,7 @@ class userInterface():
     
     def getLogos(self):
         self.AAULogo = cv2.imread("/opt/vision/aau.png")
+
     
 
 

@@ -1,3 +1,4 @@
 std_msgs/String staticObject
 std_msgs/String dynamicObject
 ---
+std_msgs/Int32 test

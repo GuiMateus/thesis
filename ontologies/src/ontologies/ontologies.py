@@ -1,14 +1,12 @@
 #!/usr/bin/env python3
 
 import rospy
+import json
 import cv2
 import os
-from owlready2 import *
-from std_msgs.msg import String
+from std_msgs.msg import String, Int32
 from service.srv import ontologies_request
 from pathlib import Path
-
-
 
 
 class ontologies():
@@ -16,13 +14,43 @@ class ontologies():
     def __init__(self):
         temp = 0
 
-    def firstOntology(self):
-        print("aaa")
-        ontologyTemplate = owlready2.get_ontology("http://www.lesfleursdunormal.fr/static/_downloads/pizza_onto.owl").load()
-        owlready2.onto_path.append("/home/gui/.environmentReconstruction")
-        ontologyTemplate.save()
+    def serviceCalled(self, req):
 
-    
+        ontologies = []
+        newOntology = True
+
+        if os.stat('.environmentReconstruction/ontologies.txt').st_size != 0:
+            with open('.environmentReconstruction/ontologies.txt', 'r') as infile:
+                ontologies = json.load(infile)
+
+            for ontology in ontologies["Ontologies"]:
+                if str(req.dynamicObject.data) == str(ontology['dynamicObject']):
+                    ontology['staticObject'] = req.staticObject.data
+                    newOntology = False
+        
+            if newOntology == True:
+                ontologies["Ontologies"].append({
+                    'dynamicObject' : req.dynamicObject.data,
+                    'staticObject' : req.staticObject.data
+                })
+            
+            with open('.environmentReconstruction/ontologies.txt', 'w') as outfile:
+                outfile.truncate(0)
+                json.dump(ontologies, outfile)
+        
+        else:
+            generateOntolgies = {}
+            generateOntolgies['Ontologies'] = []
+            generateOntolgies["Ontologies"].append({
+                'dynamicObject' : req.dynamicObject.data,
+                'staticObject' : req.staticObject.data
+            })
+            with open('.environmentReconstruction/ontologies.txt', 'w') as outfile:
+                json.dump(generateOntolgies, outfile)
+
+        test = Int32()
+        test.data = 0
+        return test
 
 
 
@@ -30,10 +58,7 @@ class ontologies():
 def main():
     rospy.init_node('ontologies')
     og = ontologies()
-    ontologiesExist = Path("/home/gui/.environmentReconstruction/visionOntologies.rdfxml")
-    if not ontologiesExist.is_file():
-        og.firstOntology()
-    rospy.Service("ontologies_service", ontologies_request, vc.startService)
+    rospy.Service("ontologiesRequest", ontologies_request, og.serviceCalled)
     while not rospy.is_shutdown():
         rospy.spin()
 
