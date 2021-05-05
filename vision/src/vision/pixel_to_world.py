@@ -82,7 +82,7 @@ class pixel_to_world():
         worldPoints = robot_requestResponse()
 
         visionResults = rospy.ServiceProxy('vision_service', vision_detect)
-        visionResponse = visionResults.call()
+        visionResponse = visionResults(req.reconstruction_type)
 
         strMsg = visionResponse.image_detections
         stringDetections = strMsg.data

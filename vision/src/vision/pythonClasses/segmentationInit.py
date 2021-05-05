@@ -1,6 +1,7 @@
 import torch
 import cv2
 import sys
+import gc
 from .imageManipulation import imageManipulation
 from .acquireData import acquireImage
 from .pointCloudProcessing import pointCloudProcessing
@@ -22,58 +23,61 @@ class segmentationInit():
         """segmentationInit class constructor
         """
         self.crops = []
-        self.deepLabDimensions = (256,256)
+        self.deepLabDimensionsOnline = (256,256)
+        self.deepLabDimensionsOffline = (512,512)
         self.newBbox = []
         self.mean=(0.485, 0.456, 0.406)
         self.std=(0.229, 0.224, 0.225)
 
 
 
-    def deeplabInit(self):
+    def deeplabInit(self, reconstructionType):
         """Initialize DeepLabV3
 
         Returns:
             DeepLab, Compose: Network model, Normalization method
         """
-        # Load the DeepLabV3 model with a Resnet101 backbone
-        model = DeepLab(num_classes=9,
-            backbone='resnet',
-            output_stride=8,
-            sync_bn=None,
-            freeze_bn=True)
+
+        model = None
+        weights = None
+
+        if reconstructionType == "online":
+            if model != None:
+                model = None
+                gc.collect()
+                torch.cuda.empty_cache()
+            # Load the DeepLabV3 model with a Resnet101 backbone
+            model = DeepLab(num_classes=9,
+                backbone='resnet',
+                output_stride=8,
+                sync_bn=None,
+                freeze_bn=True)
+            print(model)
+            weights = torch.load('/home/gui/Documents/dynamicEnvironment/model_best.pth.tar', map_location='cpu')['state_dict']
+
         
-        print(model)
+        elif reconstructionType == "offline":
+            model = None
+            gc.collect()
+            torch.cuda.empty_cache()
+            model = DeepLab(num_classes=9,
+                backbone='resnet',
+                output_stride=8,
+                sync_bn=None,
+                freeze_bn=True)
+            print(model)
+            weights = torch.load('/home/gui/Documents/dynamicEnvironment/model_best.pth.tar', map_location='cpu')['state_dict']
 
-        # Load the weights for DeepLabV3 trained on different types of screws
-
-
-        
-
-        weights = torch.load('/home/gui/Documents/dynamicEnvironment/model_best.pth.tar', map_location='cpu')['state_dict']
-
-        from collections import OrderedDict
-        new_state_dict = OrderedDict()
-        for k, v in weights.items():
-            name = k.replace("module.", "") # remove 'module.' of dataparallel
-            new_state_dict[name]=v
-
-        state_dict = new_state_dict
+        state_dict = self.fixDict(weights)
 
         model.load_state_dict(state_dict)
         
         model.eval()
-
-        ##### PC CANT HANDLE WHILE RUNNING YOLO ALSO, BIG SAD :(((((( #####
-        # if torch.cuda.is_available():
-        #     model = model.to('cuda')
-        # print("4")
-        
-        # Create a compose on how the input images should be normalized
         
         return model
 
 
-    def inference(self, model, tensorArray):
+    def inference(self, model, tensorArray, reconstructionType):
         """Inference for semantic segmentation
 
         Args:
@@ -90,19 +94,18 @@ class segmentationInit():
         # Run inference on all images
         for tensor in tensorArray:
             with torch.no_grad():
-                normalizedMask = []
+                maskOutput = []
                 output = model(tensor[0])
 
-                experiments = make_grid(decode_seg_map_sequence(torch.max(output[:3], 1)[1].detach().cpu().numpy(), dataset="pascal"), 3, normalize=False, range=(0, 255))
+                if reconstructionType == "online":
+                    maskOutput = make_grid(decode_seg_map_sequence(torch.max(output[:3], 1)[1].detach().cpu().numpy(), dataset="online"), 3, normalize=False, range=(0, 255))
+                elif reconstructionType == "offline":
+                    maskOutput = make_grid(decode_seg_map_sequence(torch.max(output[:3], 1)[1].detach().cpu().numpy(), dataset="offline"), 3, normalize=False, range=(0, 255))
 
-
-                numpyMask = experiments.numpy()
-                print("inference")
-                
+                numpyMask = maskOutput.numpy()
                 finalMask = numpyMask.transpose([1, 2, 0])
                 finalMask = finalMask[np.newaxis, :]
                 masks.append(finalMask)
-
         return masks
 
 
@@ -133,6 +136,8 @@ class segmentationInit():
                 
                 # Turn current mask into a np.array of uint8 and trasnform it into grey
                 currentMask = masks[i][0].astype('uint8') * 255
+
+                cv2.imwrite("/home/gui/badMask.png", currentMask)
                 
                 currentMask = cv2.resize(currentMask, (int(xmax-xmin), int(ymax-ymin)))
 
@@ -146,7 +151,7 @@ class segmentationInit():
                     _, mask = cv2.threshold(maskGrey, 10, 255, cv2.THRESH_BINARY)
                     maskInv = cv2.bitwise_not(mask)
 
-                    # Find the ROI where the screw mask belongs
+                    # Find the ROI where the object mask belongs
                     roi = feedback[ymin:ymax, xmin:xmax]
 
                     # Create ROI and extract mask
@@ -154,14 +159,18 @@ class segmentationInit():
                         if roi is not None and maskInv is not None:
                             imgROI = cv2.bitwise_and(roi,roi, mask=maskInv)
                             extractMask = cv2.bitwise_and(currentMask,currentMask, mask = mask)
-                            # croppedDepth = im.cropImage(depth, xmin, ymin, w, h)
+                            cv2.imwrite("/home/gui/fixedMask.png", extractMask)
                             maskArray.append(extractMask)
                             dst = cv2.add(imgROI, extractMask)
+                            cv2.imwrite("/home/gui/whatsthis.png", dst)
                             feedback[ymin:ymax, xmin:xmax] = dst
+                            cv2.imwrite("/home/gui/final.png", feedback)
+
+                            
                 i += 1
         return feedback, maskArray
 
-    def handleObjectCropping(self, inputImage, detections):
+    def handleObjectCropping(self, inputImage, detections, reconstructionType):
         # depthImageCV = inputDepthImage.astype(np.float32)
         tempVec = []
         if detections is not None:
@@ -169,7 +178,11 @@ class segmentationInit():
                 croppedImage = self.cropObjects(inputImage, bbox)
 
                 if croppedImage is not None and croppedImage.shape[0] > 10 and croppedImage.shape[1] > 10:
-                    croppedImage = cv2.resize(croppedImage, self.deepLabDimensions)
+                    if reconstructionType == "online":
+                        croppedImage = cv2.resize(croppedImage, self.deepLabDimensionsOnline)
+                    elif reconstructionType == "offline":
+                        croppedImage = cv2.resize(croppedImage, self.deepLabDimensionsOffline)
+
                     self.crops.append([croppedImage, label, confidence, self.newBbox, inputImage.shape[0], inputImage.shape[1]])
                     label = str(label)
                     tempVec.append(croppedImage)
@@ -233,7 +246,14 @@ class segmentationInit():
         img /= self.std
         return img
 
-        
-    
     def getCrops(self):
         return self.crops
+
+    def fixDict(self, weights):
+        from collections import OrderedDict
+        new_state_dict = OrderedDict()
+        for k, v in weights.items():
+            name = k.replace("module.", "") # remove 'module.' of dataparallel
+            new_state_dict[name]=v
+
+        return new_state_dict

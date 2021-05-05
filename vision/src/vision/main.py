@@ -3,6 +3,7 @@
 # import sys
 import rospy
 import cv2
+import gc
 import time
 import json
 import numpy as np
@@ -44,6 +45,8 @@ class visionCentral():
         self.segModel = []
         self.seq = 0
         self.pointCloudFileName = "/opt/vision/staticEnvironment/environmentCloud.ply"
+        self.reconstructionType = "online"
+        self.previousReconstructionType = ""
 
     def initializeYOLO(self):
         """Load YOLOv4 weights
@@ -51,7 +54,7 @@ class visionCentral():
         # try:
         print(f"{bcolors.OKCYAN}Attempting to load object detector.{bcolors.ENDC}")
         yl = yoloInit()
-        self.structure, self.classes, self.colour = yl.initialiseNetwork()
+        self.structure, self.classes, self.colour = yl.initialiseNetwork(self.reconstructionType)
         print(f"{bcolors.OKGREEN}Object detector successfully loaded.{bcolors.ENDC}")
         # except:
         #     print(f"{bcolors.WARNING}An error occured while loading the object detector, are the paths to weights, model, and cfg correct?{bcolors.ENDC}")
@@ -62,7 +65,7 @@ class visionCentral():
         # try:
         print(f"{bcolors.OKCYAN} Now attempting to load segmentation model and weights.{bcolors.ENDC}")
         dl = segmentationInit()
-        self.segModel = dl.deeplabInit()
+        self.segModel = dl.deeplabInit(self.reconstructionType)
         print(f"{bcolors.OKGREEN}Segmentation model and weights loaded successfully, you can now use the models.{bcolors.ENDC}")
         # except:
         #     print(f"{bcolors.WARNING}An error occured whiel loading the segmentation weights and model, are the paths correct?{bcolors.ENDC}")
@@ -105,14 +108,14 @@ class visionCentral():
         dl = segmentationInit()
         masksOutput = []
         # Crop input image into sub-regions based on the information from object detection
-        dl.handleObjectCropping(segImage, detections)
+        dl.handleObjectCropping(segImage, detections, self.reconstructionType)
         # Convert np.arrays to PyTorch tensors
         tensorArray = dl.imageToTensor()
 
         self.i += 1
         # Segment all the cropped objects
         if len(tensorArray) > 0:
-            masks = dl.inference(self.segModel, tensorArray)
+            masks = dl.inference(self.segModel, tensorArray, self.reconstructionType)
             feedback, masksOutput = dl.toImgCoord(masks, depthImage, feedback)
             crops = dl.getCrops()
             return feedback, masksOutput, crops
@@ -131,6 +134,17 @@ class visionCentral():
 
         im = imageManipulation()
         pp = pointCloudProcessing()
+        
+
+        self.reconstructionType = req.reconstruction_type.data
+
+        if self.reconstructionType == "offline":
+            self.initializeYOLO()
+            self.initializeDeepLab()
+
+        if self.previousReconstructionType == "offline":
+            self.reconstructionType == "online"
+            self.initializeDeepLab()
 
         # Gather images and create copies to avoid memory address replacement
         incomingImage, incomingDepth = self.getImage()
@@ -144,7 +158,6 @@ class visionCentral():
         # Semantic segmentation
         visualFeedbackMasks, maskArray, crops = self.useDeepLab(segmentationImage, incomingDepth, detections, segmentationImage)
 
-        cv2.imwrite(".environmentReconstruction/detections.png", visualFeedbackObjects)
 
 
         if maskArray is not None and len(maskArray) != 0:
@@ -154,13 +167,18 @@ class visionCentral():
             stringMsg.data = jstr
             detectionsMsg.image_detections = stringMsg
             
-
+            
             pp.pointCloudGenerate(visualFeedbackMasks, incomingDepth)
+            # if self.reconstructionType == "offline":
             pp.saveCloud(self.pointCloudFileName)
+                
+            cv2.imwrite(".environmentReconstruction/detections.png", visualFeedbackObjects)
             cv2.imwrite(".environmentReconstruction/masks.png", visualFeedbackMasks)
+            self.previousReconstructionType == self.reconstructionType
             return detectionsMsg
     
         else:
+            self.previousReconstructionType == self.reconstructionType
             print("No masks detected")
             return []
 
@@ -169,6 +187,7 @@ class visionCentral():
 def main():
     vc = visionCentral()
     rospy.init_node("semanticSegmentationNode")
+    # Load online weights
     vc.initializeYOLO()
     vc.initializeDeepLab()
 

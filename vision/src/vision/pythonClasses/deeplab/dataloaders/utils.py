@@ -4,7 +4,7 @@ import torch
 import cv2
 
 
-def decode_seg_map_sequence(label_masks, dataset='pascal'):
+def decode_seg_map_sequence(label_masks, dataset='online'):
     rgb_masks = []
     for label_mask in label_masks:
         rgb_mask = decode_segmap(label_mask, dataset)
@@ -23,9 +23,9 @@ def decode_segmap(label_mask, dataset, plot=False):
     Returns:
         (np.ndarray, optional): the resulting decoded color image.
     """
-    if dataset == 'pascal' or dataset == 'coco':
+    if dataset == 'online':
         n_classes = 9
-        label_colours = get_pascal_labels()
+        label_colours = get_online_labels()
     elif dataset == 'cityscapes':
         n_classes = 19
         label_colours = get_cityscapes_labels()
@@ -93,9 +93,17 @@ def get_cityscapes_labels():
         [119, 11, 32]])
 
 
-def get_pascal_labels():
-    """Load the mapping that associates pascal classes with label colors
+def get_online_labels():
+    """Load the mapping that associates online classes with label colors
     Returns:
         np.ndarray with dimensions (21, 3)
     """
     return np.asarray([[0,0,255], [0, 255, 0], [255, 0, 0], [30,25,100], [60, 0, 140], [0, 50, 134], [50, 50, 50], [3, 50, 50], [50, 200, 150]])
+
+
+def get_offline_labels():
+    """Load the mapping that associates offline classes with label colors
+    Returns:
+        np.ndarray with dimensions (21, 3)
+    """
+    return np.asarray([[0,0,255], [0, 255, 0], [255, 0, 0]])

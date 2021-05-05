@@ -13,7 +13,10 @@ class yoloInit():
         """
         self.detections = []
 
-    def initialiseNetwork(self):
+    def __del__(self):
+        print("clearing weights")
+
+    def initialiseNetwork(self, reconstructionType):
         """Loads the network model, weights, and classes
 
         Returns:
@@ -21,10 +24,18 @@ class yoloInit():
             (str list): Class names
             (int list): Classes colours
         """
-        darknet.set_gpu(0)
-        net, names, colours = darknet.load_network("/opt/vision/yoloConfig/dynamicEnvironmnet.cfg",
-                                                   "/opt/vision/yoloConfig/dynamicEnvironment.data", "/opt/vision/weights/yolov4/yolov4DynamicEnvironment.weights", batch_size=1)
-        return net, names, colours
+        if reconstructionType == "online":
+            net, names, colours = darknet.load_network("/opt/vision/yoloConfig/dynamicEnvironmnet.cfg",
+                                                    "/opt/vision/yoloConfig/dynamicEnvironment.data", "/opt/vision/weights/yolov4/yolov4DynamicEnvironment.weights", batch_size=1)
+            return net, names, colours
+
+        elif reconstructionType == "offline":
+            net, names, colours = darknet.load_network("/opt/vision/yoloConfig/dynamicEnvironmnet.cfg",
+                                                    "/opt/vision/yoloConfig/dynamicEnvironment.data", "/opt/vision/weights/yolov4/yolov4DynamicEnvironment.weights", batch_size=1)
+            return net, names, colours
+        
+        else:
+            print("Error in type of reconstruction stated.")
 
     def array_to_image(self, cvImage, networkStructure, channels=3):
         """Converts an numpy array into an IMAGE c_struct from darknet

@@ -38,16 +38,16 @@ class userInterface():
         ontology = [
             [sg.Text("Assign dynamically detected objects with static object classes.", font='Courier 14')],
             # *[[sg.Text(objectClass, font='Courier 14'),] for objectClass in self.dynamicObjectClasses], 
-            [sg.Listbox(list(self.dynamicObjectClasses), size=(30,20), enable_events=False, font='Courier 14', pad=(100,100), key="-STATIC-"), sg.Button('Save Ontology', font='Courier 14'), sg.Listbox(list(self.staticObjectClasses), size=(30,20), enable_events=False, font='Courier 14', pad=(100,100), key="-DYNAMIC-")],
+            [sg.Listbox(list(self.dynamicObjectClasses), size=(30,20), enable_events=False, font='Courier 14', pad=(100,100), key="-STATIC-"), sg.Button('Save Ontology', font='Courier 14', button_color=('black', 'white')), sg.Listbox(list(self.staticObjectClasses), size=(30,20), enable_events=False, font='Courier 14', pad=(100,100), key="-DYNAMIC-")],
         ]
         
         # ----- Full layout -----
         layout = [
             [   
                 sg.Image(filename="/opt/vision/aau.png", pad=(75,0)),
-                sg.Button('Offline Reconstruction', pad=(50,0), font='Courier 14'),
+                sg.Button('Offline Reconstruction', pad=(50,0), font='Courier 14', button_color=('black', 'white')),
                 # sg.Listbox(list(self.dynamicObjectClassesAll), size=(30,4), enable_events=False, tooltip='Specify which object should be included in online reconstruction. To include all objects, select "All".'),          
-                sg.Button('Online Reconstruction', pad=(50,0), font='Courier 14'),
+                sg.Button('Online Reconstruction', pad=(50,0), font='Courier 14', button_color=('black', 'white')),
                 sg.Image(filename="/opt/vision/lhLogo.png", pad=(75,10))
             ],
             [
@@ -70,9 +70,9 @@ class userInterface():
             if event == "Exit" or event == sg.WIN_CLOSED:
                 break
             if event == "Offline Reconstruction":
-                self.callOfflineService()
+                self.callRobotService("offline")
             if event == "Online Reconstruction":
-                self.callOnlineService()
+                self.callRobotService("online")
             if event == "Save Ontology":
                 self.callObjectOntologies(values["-STATIC-"], values["-DYNAMIC-"])
             # Folder name was filled in, make a list of files in the folder
@@ -98,14 +98,12 @@ class userInterface():
         ontologiesService(inputMessageDynamic, inputMessageStatic)
 
 
-    def callOfflineService(self):
+    def callRobotService(self, message):
         inputMessage = String()
-        inputMessage.data = "offline"
-        offlineResults = rospy.ServiceProxy('robotRequest', robot_request)
-        visionResponse = offlineResults(inputMessage)
+        inputMessage.data = message
+        robotService = rospy.ServiceProxy('robotRequest', robot_request)
+        visionResponse = robotService(inputMessage)
 
-    def callOnlineService(self):
-        os.system("rosservice call /robotRequest '{reconstruction_type: {data: online}}'")
     
     def getObjectClasses(self):
         with open('/opt/vision/yoloConfig/staticEnvironment.names', 'r', encoding='utf-8-sig') as file:

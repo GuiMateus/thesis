@@ -66,5 +66,8 @@ catkin_install_python(PROGRAMS src/vision/pythonClasses/acquireData.py DESTINATI
 catkin_install_python(PROGRAMS src/vision/main.py DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 catkin_install_python(PROGRAMS src/vision/pixel_to_world.py DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
 catkin_install_python(PROGRAMS src/vision/generateDataset.py DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+catkin_install_python(PROGRAMS src/vision/generateDatasetObjectDetection.py DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+
+
 
 
