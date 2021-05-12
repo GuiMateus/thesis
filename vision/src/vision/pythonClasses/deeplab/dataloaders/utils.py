@@ -26,6 +26,9 @@ def decode_segmap(label_mask, dataset, plot=False):
     if dataset == 'online':
         n_classes = 9
         label_colours = get_online_labels()
+    elif dataset == 'offline':
+        n_classes = 3
+        label_colours = get_offline_labels()
     elif dataset == 'cityscapes':
         n_classes = 19
         label_colours = get_cityscapes_labels()

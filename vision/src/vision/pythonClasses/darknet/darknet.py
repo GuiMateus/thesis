@@ -101,7 +101,7 @@ def class_colors(names):
         random.randint(0, 255)) for name in names}
 
 
-def load_network(config_file, data_file, weights, batch_size=1):
+def load_network(config_file, data_file, weights, type, batch_size=1):
     """
     load model description and weights from config files
     args:
@@ -246,6 +246,7 @@ predict = lib.network_predict_ptr
 predict.argtypes = [c_void_p, POINTER(c_float)]
 predict.restype = POINTER(c_float)
 
+
 if hasGPU:
     set_gpu = lib.cuda_set_device
     set_gpu.argtypes = [c_int]
@@ -264,6 +265,8 @@ get_network_boxes.restype = POINTER(DETECTION)
 make_network_boxes = lib.make_network_boxes
 make_network_boxes.argtypes = [c_void_p]
 make_network_boxes.restype = POINTER(DETECTION)
+
+free_cuda = lib.cuda_free
 
 free_detections = lib.free_detections
 free_detections.argtypes = [POINTER(DETECTION), c_int]

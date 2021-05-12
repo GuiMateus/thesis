@@ -13,7 +13,7 @@ class generateDataset():
         self.incomingImage = []
 
     def showImages(self, i):
-        self.incomingImage = cv2.imread("/home/gui/Documents/data/environment/dataNew/datapoint" + str(i) + ".jpg")
+        self.incomingImage = cv2.imread("/home/gui/Documents/data/environment/YOLOStatic/datapoint" + str(i) + ".jpg")
         # ai = acquireImage()
         # self.incomingImage = ai.getROSImage()
         # cv2.imshow("image", self.incomingImage)
@@ -38,12 +38,12 @@ def main():
         if(gd.incomingImage is not None):
             tempImage = gd.incomingImage.copy()
             _, detections = vc.useYOLO(gd.incomingImage)
-            images = dl.handleObjectCropping(tempImage, detections)
+            images = dl.handleObjectCropping(tempImage, detections, "offline")
 
             # if input(''):
             for image in images:
                 gd.saveImages(
-                    j, "/home/gui/Documents/data/environment/deepLabDynamic/datapoint", image)
+                    j, "/home/gui/Documents/data/environment/DeepLabStatic/datapoint", image)
                 j += 1
         i += 1
 

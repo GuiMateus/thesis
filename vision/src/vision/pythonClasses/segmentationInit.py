@@ -2,6 +2,7 @@ import torch
 import cv2
 import sys
 import gc
+import random
 from .imageManipulation import imageManipulation
 from .acquireData import acquireImage
 from .pointCloudProcessing import pointCloudProcessing
@@ -53,20 +54,20 @@ class segmentationInit():
                 sync_bn=None,
                 freeze_bn=True)
             print(model)
-            weights = torch.load('/home/gui/Documents/dynamicEnvironment/model_best.pth.tar', map_location='cpu')['state_dict']
+            weights = torch.load('/opt/vision/weights/deeplab/model_dynamic.pth.tar', map_location='cpu')['state_dict']
 
         
         elif reconstructionType == "offline":
             model = None
             gc.collect()
             torch.cuda.empty_cache()
-            model = DeepLab(num_classes=9,
+            model = DeepLab(num_classes=3,
                 backbone='resnet',
                 output_stride=8,
                 sync_bn=None,
                 freeze_bn=True)
             print(model)
-            weights = torch.load('/home/gui/Documents/dynamicEnvironment/model_best.pth.tar', map_location='cpu')['state_dict']
+            weights = torch.load('/opt/vision/weights/deeplab/model_static.pth.tar', map_location='cpu')['state_dict']
 
         state_dict = self.fixDict(weights)
 
@@ -92,10 +93,13 @@ class segmentationInit():
     
         masks = []
         # Run inference on all images
+        print(len(tensorArray))
         for tensor in tensorArray:
             with torch.no_grad():
                 maskOutput = []
                 output = model(tensor[0])
+
+                print(reconstructionType)
 
                 if reconstructionType == "online":
                     maskOutput = make_grid(decode_seg_map_sequence(torch.max(output[:3], 1)[1].detach().cpu().numpy(), dataset="online"), 3, normalize=False, range=(0, 255))
@@ -136,20 +140,29 @@ class segmentationInit():
                 
                 # Turn current mask into a np.array of uint8 and trasnform it into grey
                 currentMask = masks[i][0].astype('uint8') * 255
-
-                cv2.imwrite("/home/gui/badMask.png", currentMask)
                 
                 currentMask = cv2.resize(currentMask, (int(xmax-xmin), int(ymax-ymin)))
 
                 maskGrey = cv2.cvtColor(currentMask,cv2.COLOR_BGR2GRAY)
-                print("to image!!")
 
+                color = list(np.random.random(size=3) * 256)
+
+                currentMask[:] = color
+                
+                print(color) 
                 # Check if mask is not empty
                 if cv2.countNonZero(maskGrey) is not 0:
 
                     # Create a binary mask
                     _, mask = cv2.threshold(maskGrey, 10, 255, cv2.THRESH_BINARY)
                     maskInv = cv2.bitwise_not(mask)
+
+                    M = cv2.moments(mask)
+
+                    cX = int(M["m10"] / M["m00"]) + xmin
+                    cY = int(M["m01"] / M["m00"]) + ymin
+
+                    # put text and highlight the center
 
                     # Find the ROI where the object mask belongs
                     roi = feedback[ymin:ymax, xmin:xmax]
@@ -158,15 +171,18 @@ class segmentationInit():
                     if roi.shape[0] == maskInv.shape[0] and roi.shape[1] == maskInv.shape[1]:
                         if roi is not None and maskInv is not None:
                             imgROI = cv2.bitwise_and(roi,roi, mask=maskInv)
-                            extractMask = cv2.bitwise_and(currentMask,currentMask, mask = mask)
-                            cv2.imwrite("/home/gui/fixedMask.png", extractMask)
+                            extractMask = cv2.bitwise_and(currentMask, currentMask, mask = mask)
+                            cv2.imwrite("/home/gui/mask231.png", extractMask)
+
                             maskArray.append(extractMask)
                             dst = cv2.add(imgROI, extractMask)
-                            cv2.imwrite("/home/gui/whatsthis.png", dst)
+                            print(detection[1])
                             feedback[ymin:ymax, xmin:xmax] = dst
-                            cv2.imwrite("/home/gui/final.png", feedback)
+                            objectId = detection[1] + "_uid_" + str(random.randint(0, 255))
+                            cv2.putText(feedback, objectId, (cX, cY),cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2)
+                            cv2.circle(feedback, (cX, cY), 5, (255, 255, 255), -1)
 
-                            
+
                 i += 1
         return feedback, maskArray
 

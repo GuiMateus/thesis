@@ -3,19 +3,21 @@
 # import sys
 import rospy
 import cv2
-import gc
+import os
 import time
 import json
 import numpy as np
-import matplotlib as plt
+import gc
 
 from pythonClasses.pointCloudProcessing import pointCloudProcessing
 from pythonClasses.acquireData import acquireImage
 from pythonClasses.detectObjects import yoloInit
 from pythonClasses.segmentationInit import segmentationInit
 from pythonClasses.imageManipulation import imageManipulation
-from service.srv import vision_detect, vision_detectResponse
-from std_msgs.msg import String
+from pythonClasses.darknet import darknet
+from service.srv import vision_detect, vision_detectResponse, setobject_request
+from std_msgs.msg import String, Int32
+
 
 class bcolors:
     HEADER = '\033[95m'
@@ -47,14 +49,17 @@ class visionCentral():
         self.pointCloudFileName = "/opt/vision/staticEnvironment/environmentCloud.ply"
         self.reconstructionType = "online"
         self.previousReconstructionType = ""
+        self.dynamicObject = ""
+        self.staticObject = ""
 
     def initializeYOLO(self):
         """Load YOLOv4 weights
         """
         # try:
-        print(f"{bcolors.OKCYAN}Attempting to load object detector.{bcolors.ENDC}")
+        print(f"{bcolors.OKCYAN}Attempting to load{bcolors.ENDC} " + self.reconstructionType + f"{bcolors.OKCYAN} reconstruction object detector.{bcolors.ENDC}")
         yl = yoloInit()
-        self.structure, self.classes, self.colour = yl.initialiseNetwork(self.reconstructionType)
+        yl.reconstructionType = self.reconstructionType
+        self.structure, self.classes, self.colour = yl.initialiseNetwork()
         print(f"{bcolors.OKGREEN}Object detector successfully loaded.{bcolors.ENDC}")
         # except:
         #     print(f"{bcolors.WARNING}An error occured while loading the object detector, are the paths to weights, model, and cfg correct?{bcolors.ENDC}")
@@ -63,7 +68,8 @@ class visionCentral():
         """Load DeepLabV3 weights
         """
         # try:
-        print(f"{bcolors.OKCYAN} Now attempting to load segmentation model and weights.{bcolors.ENDC}")
+        print(
+            f"{bcolors.OKCYAN} Now attempting to load{bcolors.ENDC} " + self.reconstructionType + f"{bcolors.OKCYAN} reconstruction segmentation model and weights.{bcolors.ENDC}")
         dl = segmentationInit()
         self.segModel = dl.deeplabInit(self.reconstructionType)
         print(f"{bcolors.OKGREEN}Segmentation model and weights loaded successfully, you can now use the models.{bcolors.ENDC}")
@@ -81,6 +87,16 @@ class visionCentral():
         incomingDepth = im.getROSDepthImage()
         return incomingImage, incomingDepth
 
+    def getStaticObject(self):
+        if os.stat('.environmentReconstruction/ontologies.txt').st_size != 0:
+            with open('.environmentReconstruction/ontologies.txt', 'r') as infile:
+                ontologies = json.load(infile)
+
+            for ontology in ontologies["Ontologies"]:
+                if str(self.dynamicObject) == str(ontology['dynamicObject']):
+                    self.staticObject = ontology['staticObject']
+        
+
     def useYOLO(self, image):
         """Performs inference for object detection
 
@@ -91,6 +107,9 @@ class visionCentral():
             np.array, list: Drawn bounding boxes in image, List of strings with network detections
         """
         yl = yoloInit()
+        yl.reconstructionType = self.reconstructionType
+        yl.object = self.dynamicObject
+        yl.staticObject = self.staticObject
         # Convert np.array to darknet IMAGE C struct
         darkNetImage = yl.array_to_image(image, self.structure)
         # Use IMAGE, network weights, and classes to perform object detection
@@ -115,7 +134,8 @@ class visionCentral():
         self.i += 1
         # Segment all the cropped objects
         if len(tensorArray) > 0:
-            masks = dl.inference(self.segModel, tensorArray, self.reconstructionType)
+            masks = dl.inference(self.segModel, tensorArray,
+                                 self.reconstructionType)
             feedback, masksOutput = dl.toImgCoord(masks, depthImage, feedback)
             crops = dl.getCrops()
             return feedback, masksOutput, crops
@@ -134,31 +154,36 @@ class visionCentral():
 
         im = imageManipulation()
         pp = pointCloudProcessing()
-        
 
         self.reconstructionType = req.reconstruction_type.data
-
-        if self.reconstructionType == "offline":
-            self.initializeYOLO()
-            self.initializeDeepLab()
-
-        if self.previousReconstructionType == "offline":
-            self.reconstructionType == "online"
-            self.initializeDeepLab()
 
         # Gather images and create copies to avoid memory address replacement
         incomingImage, incomingDepth = self.getImage()
         yoloImage = incomingImage.copy()
         segmentationImage = incomingImage.copy()
+        feedBackImage = []
+
+        if self.reconstructionType == "online":
+            feedBackImage = cv2.imread(
+                ".environmentReconstruction/offlineReconstruction.png")
+            self.getStaticObject()
+
+        elif self.reconstructionType == "offline":
+            feedBackImage = segmentationImage
+            darknet.free_network_ptr(self.structure)
+            self.segModel = []
+            gc.collect()
+            self.initializeYOLO()
+            self.initializeDeepLab()
+
 
 
         # Object detection
         visualFeedbackObjects, detections = self.useYOLO(yoloImage)
 
         # Semantic segmentation
-        visualFeedbackMasks, maskArray, crops = self.useDeepLab(segmentationImage, incomingDepth, detections, segmentationImage)
-
-
+        visualFeedbackMasks, maskArray, crops = self.useDeepLab(
+            segmentationImage, incomingDepth, detections, feedBackImage)
 
         if maskArray is not None and len(maskArray) != 0:
             stringMsg = String()
@@ -166,27 +191,42 @@ class visionCentral():
             jstr = im.bbox2json(crops)
             stringMsg.data = jstr
             detectionsMsg.image_detections = stringMsg
-            
-            
+
             pp.pointCloudGenerate(visualFeedbackMasks, incomingDepth)
-            # if self.reconstructionType == "offline":
             pp.saveCloud(self.pointCloudFileName)
-                
-            cv2.imwrite(".environmentReconstruction/detections.png", visualFeedbackObjects)
-            cv2.imwrite(".environmentReconstruction/masks.png", visualFeedbackMasks)
-            self.previousReconstructionType == self.reconstructionType
+
+            if self.reconstructionType == "offline":
+                cv2.imwrite(
+                    ".environmentReconstruction/offlineReconstruction.png", visualFeedbackMasks)
+                self.reconstructionType = "online"
+                darknet.free_network_ptr(self.structure)
+                self.segModel = []
+                gc.collect()
+                self.initializeYOLO()
+                self.initializeDeepLab()
+
+            cv2.imwrite(".environmentReconstruction/detections.png",
+                        visualFeedbackObjects)
+            cv2.imwrite(".environmentReconstruction/masks.png",
+                        visualFeedbackMasks)
             return detectionsMsg
-    
+
         else:
-            self.previousReconstructionType == self.reconstructionType
             print("No masks detected")
             return []
 
+    def objectOfInterestServiceCalled(self, req):
+        self.dynamicObject = req.setObject.data
+        stopComplaining = Int32()
+        stopComplaining.data = 0
+        return stopComplaining
 
 
 def main():
     vc = visionCentral()
     rospy.init_node("semanticSegmentationNode")
+    rospy.Service("setObjectOfInterest", setobject_request,
+                  vc.objectOfInterestServiceCalled)
     # Load online weights
     vc.initializeYOLO()
     vc.initializeDeepLab()

@@ -148,6 +148,7 @@ class imageManipulation():
 
     def json2bbox(self, jsonBbox):
         detectionsArray = []
+        print(jsonBbox)
         stringDetections = json.loads(jsonBbox)
         for detection in stringDetections:
             jsonDetection = json.loads(detection)
@@ -158,5 +159,24 @@ class imageManipulation():
             detectionsArray.append([label, confidence, bbox])
         return detectionsArray
 
+    def projectImage(self, inputX, inputY, inputImageWidth, inputImageHeight, inputWidth, inputHeight, outputImageWidth, outputImageHeight):
+        # Find the image ratio
+        ratio = outputImageHeight/outputImageWidth
+        
+        percentageX = self.toPercent(inputX, inputImageWidth)
+        percentageY = self.toPercent(inputY, inputImageHeight)
+        percentageHeight = self.toPercent(
+            inputHeight, inputImageHeight)
+        percentageWidth = self.toPercent(
+            inputWidth, inputImageWidth)
 
-            
+        # Convert percentages to original image pixel values and fix width/height ratio
+        originalX = self.toPixel(percentageX, outputImageWidth)
+        originalY = self.toPixel(percentageY, outputImageHeight)
+        originalWidth = self.toPixel(
+            percentageWidth, outputImageWidth) * ratio
+        originalHeight = self.toPixel(
+            percentageHeight, outputImageHeight) / ratio
+
+        return originalX, originalY, originalWidth, originalHeight
+

@@ -14,7 +14,7 @@ class ontologies():
     def __init__(self):
         temp = 0
 
-    def serviceCalled(self, req):
+    def ontologyServiceCalled(self, req):
 
         ontologies = []
         newOntology = True
@@ -53,12 +53,10 @@ class ontologies():
         return test
 
 
-
-
 def main():
     rospy.init_node('ontologies')
     og = ontologies()
-    rospy.Service("ontologiesRequest", ontologies_request, og.serviceCalled)
+    rospy.Service("ontologiesRequest", ontologies_request, og.ontologyServiceCalled)
     while not rospy.is_shutdown():
         rospy.spin()
 

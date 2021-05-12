@@ -103,24 +103,24 @@ class pixel_to_world():
 
         if len(detections) > 0:
 
-            jsonObject = {}
-            jsonObject['detections'] = []
+            # jsonObject = {}
+            # jsonObject['detections'] = []
 
-            for label, confidence, bbox in detections:
-                xmin, ymin, xmax, ymax = im.extractBbox(bbox)
-                bboxMinWorld = self.get_point(msg, int(xmin), int(ymin))
-                bboxMaxWorld = self.get_point(msg, int(xmax), int(ymax))
+            # for label, confidence, bbox in detections:
+            #     xmin, ymin, xmax, ymax = im.extractBbox(bbox)
+            #     bboxMinWorld = self.get_point(msg, int(xmin), int(ymin))
+            #     bboxMaxWorld = self.get_point(msg, int(xmax), int(ymax))
 
 
-                jsonObject['detections'].append({
-                    'label' : label,
-                    'confidence' : confidence,
-                    'min' : str(bboxMinWorld),
-                    'max' : str(bboxMaxWorld)
+            #     jsonObject['detections'].append({
+            #         'label' : label,
+            #         'confidence' : confidence,
+            #         'min' : str(bboxMinWorld),
+            #         'max' : str(bboxMaxWorld)
                     
-                })
-            with open('.environmentReconstruction/predictions.json', 'w') as outfile:
-                json.dump(jsonObject, outfile)
+            #     })
+            # with open('.environmentReconstruction/predictions.json', 'w') as outfile:
+            #     json.dump(jsonObject, outfile)
 
             nullPoint = worldPoints
             # temp = Point32()
