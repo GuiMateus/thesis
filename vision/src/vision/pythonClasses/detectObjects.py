@@ -74,17 +74,12 @@ class yoloInit():
                     print(offlineDetections)
                     print(offlineDetections["detections"])
                 for detection in offlineDetections["detections"]:
+                    minX = detection['minX']
+                    minY = detection['minY']
+                    maxX = detection['maxX']
+                    maxY = detection['maxY']
+                    
 
-                    if str(self.staticObject) == str(detection['label']):
-                        minX = detection['minX']
-                        minY = detection['minY']
-                        maxX = detection['maxX']
-                        maxY = detection['maxY']
-                        print(min)
-                        break
-                    else:
-                        print("CHOOSE AN OBJECT")
-                        return None
             
             if minX != -1 and minY != -1 and maxX != -1 and maxY != -1: 
                 self.cropRegionWidth = float(maxX) - float(minX)
