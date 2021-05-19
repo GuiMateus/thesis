@@ -60,7 +60,7 @@ class yoloInit():
         inputImage = []
 
         print(self.reconstructionType)
-        if self.reconstructionType == "online":
+        if self.reconstructionType == "offline":
             im = imageManipulation()
             offlineDetections = []
             minX = -1
@@ -96,7 +96,7 @@ class yoloInit():
                 inputImage = inputImage[0]
                 self.staticObjectMinCoord = [float(minX), float(minY)]
                     
-        elif self.reconstructionType == "offline":
+        elif self.reconstructionType == "online":
             inputImage = cvImage
 
         width, height = self.getNetworkDims(networkStructure)
@@ -156,7 +156,7 @@ class yoloInit():
             (list): List of detections updated to containpixel coordinates of original image space
         """
         # Constant value for the minimum accepted confidence value for detections
-        CONFIDENCEVALUE = 75
+        CONFIDENCEVALUE = 50
         detectionsOriginal = []
 
         jsonObject = {}
@@ -187,7 +187,7 @@ class yoloInit():
                 if projectedX > 0 and projectedX < 10000 and projectedY > 0 and projectedY < 10000 and projectedWidth > 0 and projectedWidth < 10000 and projectedHeight > 0 and projectedHeight < 10000:
 
                     # Convert bounding boxes to percentages
-                    if self.reconstructionType == "online":
+                    if self.reconstructionType == "offline":
 
                         imageHeight = self.cropRegionHeight
                         imageWidth = self.cropRegionWidth
@@ -205,7 +205,7 @@ class yoloInit():
                         # originalY = originalY + self.staticObjectMinCoord[1]
                         
 
-                    elif self.reconstructionType == "offline":
+                    elif self.reconstructionType == "online":
                         imageHeight = image.shape[0]
                         imageWidth = image.shape[1]
                         originalX, originalY, originalWidth, originalHeight = im.projectImage(projectedX, projectedY, networkWidth, networkHeight, projectedWidth, projectedHeight, imageWidth, imageHeight)
