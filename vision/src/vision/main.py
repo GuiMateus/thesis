@@ -95,6 +95,8 @@ class visionCentral():
             for ontology in ontologies["Ontologies"]:
                 if str(self.dynamicObject) == str(ontology['dynamicObject']):
                     self.staticObject = ontology['staticObject']
+                    print(self.staticObject)
+
         
 
     def useYOLO(self, image):
