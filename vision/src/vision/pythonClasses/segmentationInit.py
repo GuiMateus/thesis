@@ -78,7 +78,7 @@ class segmentationInit():
         return model
 
 
-    def inference(self, model, tensorArray, reconstructionType):
+    def inference(self, model, tensorArray, reconstructionType, image):
         """Inference for semantic segmentation
 
         Args:
@@ -94,22 +94,51 @@ class segmentationInit():
         masks = []
         # Run inference on all images
         print(len(tensorArray))
-        for tensor in tensorArray:
-            with torch.no_grad():
-                maskOutput = []
-                output = model(tensor[0])
+        # for tensor in tensorArray:
+        with torch.no_grad():
+            maskOutput = []
+            output = model(tensorArray)
 
-                print(reconstructionType)
+            print(reconstructionType)
 
-                if reconstructionType == "online":
-                    maskOutput = make_grid(decode_seg_map_sequence(torch.max(output[:3], 1)[1].detach().cpu().numpy(), dataset="online"), 3, normalize=False, range=(0, 255))
-                elif reconstructionType == "offline":
-                    maskOutput = make_grid(decode_seg_map_sequence(torch.max(output[:3], 1)[1].detach().cpu().numpy(), dataset="offline"), 3, normalize=False, range=(0, 255))
+            if reconstructionType == "online":
+                maskOutput = make_grid(decode_seg_map_sequence(torch.max(output[:3], 1)[1].detach().cpu().numpy(), dataset="online"), 3, normalize=False, range=(0, 255))
+            elif reconstructionType == "offline":
+                maskOutput = make_grid(decode_seg_map_sequence(torch.max(output[:3], 1)[1].detach().cpu().numpy(), dataset="offline"), 3, normalize=False, range=(0, 255))
 
-                numpyMask = maskOutput.numpy()
-                finalMask = numpyMask.transpose([1, 2, 0])
-                finalMask = finalMask[np.newaxis, :]
-                masks.append(finalMask)
+            numpyMask = maskOutput.numpy()
+            finalMask = numpyMask.transpose([1, 2, 0])
+            finalMask = finalMask[np.newaxis, :]
+            currentMask = finalMask[0].astype('uint8') * 255
+                
+            maskGrey = cv2.cvtColor(currentMask,cv2.COLOR_BGR2GRAY)
+
+            color = list(np.random.random(size=3) * 256)
+
+            # currentMask[:] = color
+            
+            print(color) 
+            # Check if mask is not empty
+            if cv2.countNonZero(maskGrey) is not 0:
+
+                # Create a binary mask
+                _, mask = cv2.threshold(maskGrey, 10, 255, cv2.THRESH_BINARY)
+                maskInv = cv2.bitwise_not(mask)
+
+                # put text and highlight the center
+
+                # Find the ROI where the object mask belongs
+                roi = image[0:720, 0:1280]
+
+                # Create ROI and extract mask
+                if roi.shape[0] == maskInv.shape[0] and roi.shape[1] == maskInv.shape[1]:
+                    if roi is not None and maskInv is not None:
+                        imgROI = cv2.bitwise_and(roi,roi, mask=maskInv)
+                        extractMask = cv2.bitwise_and(currentMask, currentMask, mask = mask)
+
+                        dst = cv2.add(imgROI, extractMask)
+                        image[0:720, 0:1280] = dst
+                        cv2.imwrite("/home/gui/deepLab.png", image)
         return masks
 
 
@@ -226,7 +255,7 @@ class segmentationInit():
         return cropped
 
 
-    def imageToTensor(self):
+    def imageToTensor(self, image):
         """Create a tensors from the cropped images
 
         Args:
@@ -236,14 +265,14 @@ class segmentationInit():
             torch.tensor[]: Returns an array of tensors from the cropped regions 
         """
 
-        tensorArray = []
-        for croppedIndex in self.crops:
+        # tensorArray = []
+        # for croppedIndex in self.crops:
             # Convert arrays into PIL.image
             # Create tensor
-            tensor = self.normalizeImages(croppedIndex[0])
-            tensor = self.toTensor(tensor).unsqueeze(0)
-            tensorArray.append([tensor, croppedIndex[1], croppedIndex[2], croppedIndex[3], croppedIndex[4], croppedIndex[5]])
-        return tensorArray
+        tensor = self.normalizeImages(image)
+        tensor = self.toTensor(tensor).unsqueeze(0)
+            # tensorArray.append([tensor, croppedIndex[1], croppedIndex[2], croppedIndex[3], croppedIndex[4], croppedIndex[5]])
+        return tensor
 
     def toTensor(self, img):
         # swap color axis because
