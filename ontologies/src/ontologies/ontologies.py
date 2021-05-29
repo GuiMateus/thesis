@@ -19,22 +19,24 @@ class ontologies():
         ontologies = []
         newOntology = True
 
-        if os.stat('.environmentReconstruction/ontologies.txt').st_size != 0:
-            with open('.environmentReconstruction/ontologies.txt', 'r') as infile:
+        if os.stat('.environmentReconstruction/ontologies.json').st_size != 0:
+            with open('.environmentReconstruction/ontologies.json', 'r') as infile:
                 ontologies = json.load(infile)
 
             for ontology in ontologies["Ontologies"]:
                 if str(req.dynamicObject.data) == str(ontology['dynamicObject']):
                     ontology['staticObject'] = req.staticObject.data
+                    ontology['task'] = req.task.data
                     newOntology = False
         
             if newOntology == True:
                 ontologies["Ontologies"].append({
                     'dynamicObject' : req.dynamicObject.data,
-                    'staticObject' : req.staticObject.data
+                    'staticObject' : req.staticObject.data,
+                    'task' : req.task.data
                 })
             
-            with open('.environmentReconstruction/ontologies.txt', 'w') as outfile:
+            with open('.environmentReconstruction/ontologies.json', 'w') as outfile:
                 outfile.truncate(0)
                 json.dump(ontologies, outfile)
         
@@ -43,9 +45,10 @@ class ontologies():
             generateOntolgies['Ontologies'] = []
             generateOntolgies["Ontologies"].append({
                 'dynamicObject' : req.dynamicObject.data,
-                'staticObject' : req.staticObject.data
+                'staticObject' : req.staticObject.data,
+                'task' : req.task.data
             })
-            with open('.environmentReconstruction/ontologies.txt', 'w') as outfile:
+            with open('.environmentReconstruction/ontologies.json', 'w') as outfile:
                 json.dump(generateOntolgies, outfile)
 
         test = Int32()

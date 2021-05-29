@@ -71,13 +71,13 @@ class yoloInit():
             if os.stat('.environmentReconstruction/predictions.json').st_size != 0:
                 with open('.environmentReconstruction/predictions.json', 'r') as infile:
                     offlineDetections = json.load(infile)
-                    print(offlineDetections)
-                    print(offlineDetections["detections"])
+
                 for detection in offlineDetections["detections"]:
-                    minX = detection['minX']
-                    minY = detection['minY']
-                    maxX = detection['maxX']
-                    maxY = detection['maxY']
+                    if str(detection["label"]) == self.staticObject:
+                        minX = detection['minX']
+                        minY = detection['minY']
+                        maxX = detection['maxX']
+                        maxY = detection['maxY']
                     
 
             
@@ -134,7 +134,6 @@ class yoloInit():
         # If objects are found, they can be drawn
         if self.detections is not None:
             darknet.draw_boxes(self.detections, cvImage, colours)
-            cv2.imwrite("/home/gui/plzwork.png", cvImage)
             return cvImage, self.detections
         else:
             return None, None
@@ -153,9 +152,6 @@ class yoloInit():
         # Constant value for the minimum accepted confidence value for detections
         CONFIDENCEVALUE = 75
         detectionsOriginal = []
-
-        jsonObject = {}
-        jsonObject['detections'] = []
 
         im = imageManipulation()
 
@@ -212,33 +208,6 @@ class yoloInit():
                     detectionsOriginal.append((label, confidence, (bbox)))
 
                     # Save detections into JSON file if offline reconstruction
-                    if self.reconstructionType == "offline":
-                        minx = originalX-originalWidth/2
-                        miny = originalY-originalHeight/2
-                        maxx = originalX+originalWidth/2
-                        maxy = originalY+originalHeight/2
-                        if minx < 0:
-                            minx = 0
-                        if maxx > imageWidth:
-                            maxx = imageWidth
-                        if miny < 0:
-                            miny = 0
-                        if maxy > imageHeight:
-                            maxy = imageHeight
-
-                        jsonObject['detections'].append({
-                            'label': label,
-                            'confidence': confidence,
-                            'minX': str(minx),
-                            'minY': str(miny),
-                            'maxX': str(maxx),
-                            'maxY': str(maxy)
-                        })
-
-        # Push the offline detections into JSON
-        if self.reconstructionType == "offline" and jsonObject != {} and detections != None:
-            with open('.environmentReconstruction/predictions.json', 'w') as outfile:
-                json.dump(jsonObject, outfile)
         return detectionsOriginal
 
     def getNetworkDims(self, networkStructure):

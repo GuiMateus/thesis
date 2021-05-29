@@ -1,0 +1,6 @@
+std_msgs/Int32 x
+std_msgs/Int32 y
+---
+std_msgs/Int32 x_world
+std_msgs/Int32 y_world
+std_msgs/Int32 z_world

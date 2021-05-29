@@ -46,22 +46,26 @@ class pointCloudProcessing():
         else:
             return None
     
-    def saveCloud(self, fileName):
+    def saveCloud(self):
         # o3d.visualization.draw_geometries([self.cloud])
+        octreeData = o3d.cuda.pybind.geometry.Octree(max_depth=4)
+        o3d.geometry.Octree.convert_from_point_cloud(octreeData, self.cloud, size_expand=0.0001)
+
+
         vis = o3d.visualization.Visualizer()
         vis.create_window(window_name="CloudSaverWindow", width=1280, height=720, visible=False)
-        vis.add_geometry(self.cloud)
-        vis.update_geometry(self.cloud)
+        vis.add_geometry(octreeData)
+        vis.update_geometry(octreeData)
         vis.poll_events()
         vis.update_renderer()
         vis.capture_screen_image(".environmentReconstruction/cloud.png", True)
-        time.sleep(5)
-        o3d.io.write_point_cloud(".environmentReconstruction/temp.ply", self.cloud)
+        # time.sleep(5)
+        # o3d.io.write_point_cloud(".environmentReconstruction/temp.ply", self.cloud)
 
 
         
     def downscaleCloud(self, pointCloud):
-        octreeData = o3d.cuda.pybind.geometry.Octree(max_depth=8)
+        octreeData = o3d.cuda.pybind.geometry.Octree(max_depth=16)
         print(pointCloud)
 
         o3d.geometry.Octree.convert_from_point_cloud(octreeData, pointCloud, size_expand=0.0001)

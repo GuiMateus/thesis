@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 
 import rospy
-from service.srv import robot_request, robot_requestResponse
+from service.srv import pixel2world_request, pixel2world_requestResponse
 from sensor_msgs.msg import PointCloud, JointState
 from std_msgs.msg import Empty
 
 
 def matlab_cb(msg):
     pointCloudWorld = PointCloud()
-    visionClient = rospy.ServiceProxy("/robotRequest", robot_request)
+    visionClient = rospy.ServiceProxy("/pixel2world", pixel2world_request)
     visionResponse = visionClient.call()
     pointCloudWorld = visionResponse.centroid_world_coord
     publisher = rospy.Publisher("vision_positions_pc", PointCloud, queue_size=1)

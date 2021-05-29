@@ -53,7 +53,7 @@ find_package(catkin REQUIRED std_msgs message_generation message_runtime sensor_
  add_service_files(
      FILES
      vision_detect.srv
-     robot_request.srv
+     pixel2world_request.srv
      ontologies_request.srv
      setobject_request.srv
  )

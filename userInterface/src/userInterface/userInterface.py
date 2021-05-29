@@ -5,7 +5,7 @@ import PySimpleGUI as sg
 import cv2
 import os
 from std_msgs.msg import String
-from service.srv import vision_detect, robot_request, ontologies_request, setobject_request
+from service.srv import vision_detect, ontologies_request, setobject_request
 from vision.pythonClasses.acquireData import acquireImage
 
 
@@ -17,6 +17,7 @@ class userInterface():
         self.staticObjectClasses = []
         self.objectPicked = -1
         self.AAULogo = []
+        self.taskOntology = []
 
     def interfaceCallback(self):
         # First the window layout in 2 column
@@ -46,9 +47,9 @@ class userInterface():
         ontology_tab = [
             [sg.Text(
                 "Assign dynamically detected objects with static object classes.", font='Courier 14')],
+            [sg.Button('Save Ontology', font='Courier 14', button_color=('black', 'white'))],
             # *[[sg.Text(objectClass, font='Courier 14'),] for objectClass in self.dynamicObjectClasses],
-            [sg.Listbox(list(self.dynamicObjectClasses), size=(30, 20), enable_events=False, font='Courier 14', pad=(100, 100), key="-STATIC-"), sg.Button('Save Ontology', font='Courier 14',
-                                                                                                                                                           button_color=('black', 'white')), sg.Listbox(list(self.staticObjectClasses), size=(30, 20), enable_events=False, font='Courier 14', pad=(100, 100), key="-DYNAMIC-")],
+            [sg.Listbox(list(self.dynamicObjectClasses), size=(20, 20), enable_events=False, font='Courier 14', pad=(100, 100), key="-STATIC-"), sg.Listbox(list(self.staticObjectClasses), size=(20, 20), enable_events=False, font='Courier 14', pad=(100, 100), key="-DYNAMIC-"), sg.Listbox(list(self.taskOntology), size=(20, 20), enable_events=False, font='Courier 14', pad=(100, 100), key="-TASK-")],
         ]
         selectObject_tab = [
             [sg.Text("Press image to find object.", font='Courier 14')],
@@ -123,12 +124,12 @@ class userInterface():
             if event == "Exit" or event == sg.WIN_CLOSED:
                 break
             if event == "Offline Reconstruction":
-                self.callRobotService("offline")
+                self.callVisionService("offline")
             if event == "Online Reconstruction":
-                self.callRobotService("online")
+                self.callVisionService("online")
             if event == "Save Ontology":
                 self.callObjectOntologies(
-                    values["-STATIC-"], values["-DYNAMIC-"])
+                    values["-STATIC-"], values["-DYNAMIC-"], values["-TASK-"])
             if event == "Pump" or event == "Cleaning Bottle" or event == "Tape" or event == "Screwdriver" or event == "Toolbox" or event == "Box Cutter" or event == "Wire Cutter" or event == "Saw":
                 self.setObjectOfInterest(event)
 
@@ -145,7 +146,7 @@ class userInterface():
                     filename="/home/gui/.environmentReconstruction/cloud.png")
 
             except:
-                pass
+                pass        
 
     def getImage(self):
         ai = acquireImage()
@@ -162,22 +163,25 @@ class userInterface():
             'setObjectOfInterest', setobject_request)
         setObjectService(inputMessageObjectInterest)
 
-    def callObjectOntologies(self, staticObject, dynamicObject):
+    def callObjectOntologies(self, staticObject, dynamicObject, task):
         inputMessageStatic = String()
         inputMessageDynamic = String()
+        inputMessageTask = String()
 
         inputMessageStatic.data = str(staticObject[0])
         inputMessageDynamic.data = str(dynamicObject[0])
+        inputMessageTask.data = str(task[0])
+
 
         ontologiesService = rospy.ServiceProxy(
             'ontologiesRequest', ontologies_request)
-        ontologiesService(inputMessageDynamic, inputMessageStatic)
+        ontologiesService(inputMessageDynamic, inputMessageStatic, inputMessageTask)
 
-    def callRobotService(self, message):
+    def callVisionService(self, message):
         inputMessage = String()
         inputMessage.data = message
-        robotService = rospy.ServiceProxy('robotRequest', robot_request)
-        visionResponse = robotService(inputMessage)
+        visionService = rospy.ServiceProxy('vision_service', vision_detect)
+        visionResponse = visionService(inputMessage)
 
     def getObjectClasses(self):
         with open('/opt/vision/yoloConfig/staticEnvironment.names', 'r', encoding='utf-8-sig') as file:
@@ -191,7 +195,12 @@ class userInterface():
             for objectClass in content:
                 fixedClass = objectClass.replace('\n', '')
                 self.dynamicObjectClasses.append(fixedClass)
-                self.dynamicObjectClassesAll.append(fixedClass)
+        
+        with open('/opt/vision/GUIImages/taskOntologies.names', 'r', encoding='utf-8-sig') as file:
+            content = file.readlines()
+            for objectClass in content:
+                fixedClass = objectClass.replace('\n', '')
+                self.taskOntology.append(fixedClass)
 
 
 def main():
