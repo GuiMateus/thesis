@@ -46,7 +46,7 @@ class userInterface():
         ]
         ontology_tab = [
             [sg.Text(
-                "Assign dynamically detected objects with static object classes.", font='Courier 14')],
+                "Assign dynamically detected objects with static object classes and a task.", font='Courier 14')],
             [sg.Button('Save Ontology', font='Courier 14', button_color=('black', 'white'))],
             # *[[sg.Text(objectClass, font='Courier 14'),] for objectClass in self.dynamicObjectClasses],
             [sg.Listbox(list(self.dynamicObjectClasses), size=(20, 20), enable_events=False, font='Courier 14', pad=(100, 100), key="-STATIC-"), sg.Listbox(list(self.staticObjectClasses), size=(20, 20), enable_events=False, font='Courier 14', pad=(100, 100), key="-DYNAMIC-"), sg.Listbox(list(self.taskOntology), size=(20, 20), enable_events=False, font='Courier 14', pad=(100, 100), key="-TASK-")],
