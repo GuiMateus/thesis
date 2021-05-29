@@ -12,6 +12,7 @@ from torchvision import transforms
 from .deeplab.dataloaders.utils import  *
 from torchvision.utils import make_grid, save_image
 from .deeplab.dataloaders import custom_transforms as tr
+
 from . import img
 from tensorboardX import SummaryWriter
 
@@ -25,7 +26,7 @@ class segmentationInit():
         """
         self.crops = []
         self.deepLabDimensionsOnline = (256,256)
-        self.deepLabDimensionsOffline = (512,512)
+        self.deepLabDimensionsOffline = (256,256)
         self.newBbox = []
         self.mean=(0.485, 0.456, 0.406)
         self.std=(0.229, 0.224, 0.225)
@@ -42,32 +43,33 @@ class segmentationInit():
         model = None
         weights = None
 
-        if reconstructionType == "online":
+        if reconstructionType == "offline":
             if model != None:
                 model = None
                 gc.collect()
                 torch.cuda.empty_cache()
             # Load the DeepLabV3 model with a Resnet101 backbone
-            model = DeepLab(num_classes=9,
+            model = DeepLab(num_classes=21,
                 backbone='resnet',
                 output_stride=8,
                 sync_bn=None,
                 freeze_bn=True)
             print(model)
-            weights = torch.load('/opt/vision/weights/deeplab/model_dynamic.pth.tar', map_location='cpu')['state_dict']
+            weights = torch.load('/home/gui/Documents/deeplab-resnet.pth.tar', map_location='cpu')['state_dict']
+
 
         
-        elif reconstructionType == "offline":
+        elif reconstructionType == "online":
             model = None
             gc.collect()
             torch.cuda.empty_cache()
-            model = DeepLab(num_classes=3,
+            model = DeepLab(num_classes=21,
                 backbone='resnet',
                 output_stride=8,
                 sync_bn=None,
                 freeze_bn=True)
             print(model)
-            weights = torch.load('/opt/vision/weights/deeplab/model_static.pth.tar', map_location='cpu')['state_dict']
+            weights = torch.load('/home/gui/Documents/deeplab-resnet.pth.tar', map_location='cpu')['state_dict']
 
         state_dict = self.fixDict(weights)
 
@@ -101,10 +103,10 @@ class segmentationInit():
 
                 print(reconstructionType)
 
-                if reconstructionType == "online":
-                    maskOutput = make_grid(decode_seg_map_sequence(torch.max(output[:3], 1)[1].detach().cpu().numpy(), dataset="online"), 3, normalize=False, range=(0, 255))
-                elif reconstructionType == "offline":
+                if reconstructionType == "offline":
                     maskOutput = make_grid(decode_seg_map_sequence(torch.max(output[:3], 1)[1].detach().cpu().numpy(), dataset="offline"), 3, normalize=False, range=(0, 255))
+                elif reconstructionType == "online":
+                    maskOutput = make_grid(decode_seg_map_sequence(torch.max(output[:3], 1)[1].detach().cpu().numpy(), dataset="online"), 3, normalize=False, range=(0, 255))
 
                 numpyMask = maskOutput.numpy()
                 finalMask = numpyMask.transpose([1, 2, 0])
@@ -194,15 +196,34 @@ class segmentationInit():
                 croppedImage = self.cropObjects(inputImage, bbox)
 
                 if croppedImage is not None and croppedImage.shape[0] > 10 and croppedImage.shape[1] > 10:
-                    if reconstructionType == "online":
+                    if reconstructionType == "offline":
                         croppedImage = cv2.resize(croppedImage, self.deepLabDimensionsOnline)
-                    elif reconstructionType == "offline":
+                    elif reconstructionType == "online":
                         croppedImage = cv2.resize(croppedImage, self.deepLabDimensionsOffline)
 
                     self.crops.append([croppedImage, label, confidence, self.newBbox, inputImage.shape[0], inputImage.shape[1]])
                     label = str(label)
                     tempVec.append(croppedImage)
             return tempVec
+
+
+    def handleObjectCropping2(self, inputImage, detections, reconstructionType):
+        # depthImageCV = inputDepthImage.astype(np.float32)
+        tempVec = []
+        if detections is not None:
+            for label, confidence, bbox in detections:
+                croppedImage = self.cropObjects(inputImage, bbox)
+
+                if croppedImage is not None and croppedImage.shape[0] > 10 and croppedImage.shape[1] > 10:
+                    if reconstructionType == "offline":
+                        croppedImage = cv2.resize(croppedImage, self.deepLabDimensionsOnline)
+                    elif reconstructionType == "online":
+                        croppedImage = cv2.resize(croppedImage, self.deepLabDimensionsOffline)
+                    label = str(label)
+                    tempVec.append(croppedImage)
+            return tempVec
+
+
 
 
     def cropObjects(self, image, bbox):
@@ -243,6 +264,26 @@ class segmentationInit():
             tensor = self.normalizeImages(croppedIndex[0])
             tensor = self.toTensor(tensor).unsqueeze(0)
             tensorArray.append([tensor, croppedIndex[1], croppedIndex[2], croppedIndex[3], croppedIndex[4], croppedIndex[5]])
+        return tensorArray
+
+
+    def imageToTensor2(self, input):
+        """Create a tensors from the cropped images
+
+        Args:
+            normalize (Compose): Normalization of the tensors
+
+        Returns:
+            torch.tensor[]: Returns an array of tensors from the cropped regions 
+        """
+
+        tensorArray = []
+        for croppedIndex in input:
+            # Convert arrays into PIL.image
+            # Create tensor
+            tensor = self.normalizeImages(croppedIndex[0])
+            tensor = self.toTensor(tensor).unsqueeze(0)
+            tensorArray.append(tensor)
         return tensorArray
 
     def toTensor(self, img):

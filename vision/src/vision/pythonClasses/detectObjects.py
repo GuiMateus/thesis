@@ -33,13 +33,13 @@ class yoloInit():
             (int list): Classes colours
         """
         if self.reconstructionType == "online":
-            net, names, colours = darknet.load_network("/opt/vision/yoloConfig/dynamicEnvironment.cfg",
-                                                       "/opt/vision/yoloConfig/dynamicEnvironment.data", "/opt/vision/weights/yolov4/yolov4DynamicEnvironment.weights", self.reconstructionType, batch_size=1)
+            net, names, colours = darknet.load_network("/home/gui/Documents/testsCoco/yolov4.cfg",
+                                                       "/home/gui/Documents/testsCoco/yolov4.data", "/home/gui/Documents/testsCoco/yolov4.weights", self.reconstructionType, batch_size=1)
             return net, names, colours
 
         elif self.reconstructionType == "offline":
-            net, names, colours = darknet.load_network("/opt/vision/yoloConfig/staticEnvironment.cfg",
-                                                       "/opt/vision/yoloConfig/staticEnvironment.data", "/opt/vision/weights/yolov4/yolov4StaticEnvironment.weights", self.reconstructionType, batch_size=1)
+            net, names, colours = darknet.load_network("/home/gui/Documents/testsCoco/yolov4.cfg",
+                                                       "/home/gui/Documents/testsCoco/yolov4.data", "/home/gui/Documents/testsCoco/yolov4.weights", self.reconstructionType, batch_size=1)
             return net, names, colours
 
         else:
@@ -132,12 +132,12 @@ class yoloInit():
         darknet.print_detections(self.detections)
 
         # If objects are found, they can be drawn
-        if self.detections is not None:
-            darknet.draw_boxes(self.detections, cvImage, colours)
-            cv2.imwrite("/home/gui/plzwork.png", cvImage)
-            return cvImage, self.detections
-        else:
-            return None, None
+        # if self.detections != None:
+        #     darknet.draw_boxes(self.detections, cvImage, colours)
+            # cv2.imwrite("/home/gui/plzwork.png", cvImage)
+        return cvImage, self.detections
+        # else:
+        #     return None, None
 
     def originalProjection(self, detections, networkStructure, image):
         """Project pixel coordinates from Darknet image dims to original image dims
@@ -151,7 +151,7 @@ class yoloInit():
             (list): List of detections updated to containpixel coordinates of original image space
         """
         # Constant value for the minimum accepted confidence value for detections
-        CONFIDENCEVALUE = 75
+        CONFIDENCEVALUE = 50
         detectionsOriginal = []
 
         jsonObject = {}

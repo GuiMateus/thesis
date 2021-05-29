@@ -13,9 +13,8 @@ class VOCSegmentation(Dataset):
     NUM_CLASSES = 9
 
     def __init__(self,
-                 args,
-                 base_dir="/user/student.aau.dk/gmateu16/Pascal_Data",
-                 split='train',
+                 base_dir="/home/gui/Documents/testsPascal/val_data/",
+                 split='val',
                  ):
         """
         :param base_dir: path to VOC dataset directory
@@ -33,8 +32,6 @@ class VOCSegmentation(Dataset):
             split.sort()
             self.split = split
 
-        self.args = args
-
         _splits_dir = os.path.join(self._base_dir, 'ImageSets', 'Segmentation')
 
         self.im_ids = []
@@ -46,8 +43,8 @@ class VOCSegmentation(Dataset):
                 lines = f.read().splitlines()
 
             for ii, line in enumerate(lines):
-                _image = "/user/student.aau.dk/gmateu16/Pascal_Data/JPEGImages/" + line + ".jpg"
-                _cat = "/user/student.aau.dk/gmateu16/Pascal_Data/SegmentationClassPNG/" + line + ".png"
+                _image = "/home/gui/Documents/testsPascal/val_data/JPEGImages/" + line + ".jpg"
+                _cat = "/home/gui/Documents/testsPascal/val_data/SegmentationClassPNG/" + line + ".png"
                 # assert os.path.isfile(_image)
                 # assert os.path.isfile(_cat)
                 self.im_ids.append(line)
@@ -83,7 +80,7 @@ class VOCSegmentation(Dataset):
     def transform_tr(self, sample):
         composed_transforms = transforms.Compose([
             tr.RandomHorizontalFlip(),
-            tr.RandomScaleCrop(base_size=self.args.base_size, crop_size=self.args.crop_size),
+            tr.RandomScaleCrop(base_size=512, crop_size=512),
             tr.RandomGaussianBlur(),
             tr.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
             tr.ToTensor()])
@@ -93,7 +90,7 @@ class VOCSegmentation(Dataset):
     def transform_val(self, sample):
 
         composed_transforms = transforms.Compose([
-            tr.FixScaleCrop(crop_size=self.args.crop_size),
+            tr.FixScaleCrop(crop_size=64),
             tr.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
             tr.ToTensor()])
 

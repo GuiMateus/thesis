@@ -2,6 +2,7 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset
 from ...mypath import Path
+
 from tqdm import trange
 import os
 from pycocotools.coco import COCO
@@ -13,18 +14,17 @@ ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 
 class COCOSegmentation(Dataset):
-    NUM_CLASSES = 8
-    CAT_LIST = [0, 1, 2, 3, 4, 5, 6, 7]
+    NUM_CLASSES = 21
+    CAT_LIST = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
 
     def __init__(self,
-                 args,
                  base_dir=Path.db_root_dir('coco'),
                  split='train',
                  year='2017'):
         super().__init__()
-        ann_file = os.path.join(base_dir, 'annotations/instances_{}{}.json'.format(split, year))
-        ids_file = os.path.join(base_dir, 'annotations/{}_ids_{}.pth'.format(split, year))
-        self.img_dir = os.path.join(base_dir, 'images/{}{}'.format(split, year))
+        ann_file =  '/home/gui/Documents/testsCoco/annotations_trainval2017/annotations/instances_{}{}.json'.format(split, year)
+        ids_file = 'FileNotExtst'
+        self.img_dir = '/home/gui/Documents/testsCoco/{}{}'.format(split, year)
         self.split = split
         self.coco = COCO(ann_file)
         self.coco_mask = mask
@@ -33,7 +33,6 @@ class COCOSegmentation(Dataset):
         else:
             ids = list(self.coco.imgs.keys())
             self.ids = self._preprocess(ids, ids_file)
-        self.args = args
 
     def __getitem__(self, index):
         _img, _target = self._make_img_gt_point_pair(index)
@@ -97,7 +96,7 @@ class COCOSegmentation(Dataset):
     def transform_tr(self, sample):
         composed_transforms = transforms.Compose([
             tr.RandomHorizontalFlip(),
-            tr.RandomScaleCrop(base_size=self.args.base_size, crop_size=self.args.crop_size),
+            tr.RandomScaleCrop(base_size=512, crop_size=512),
             tr.RandomGaussianBlur(),
             tr.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
             tr.ToTensor()])
@@ -107,8 +106,8 @@ class COCOSegmentation(Dataset):
     def transform_val(self, sample):
 
         composed_transforms = transforms.Compose([
-            tr.FixScaleCrop(crop_size=self.args.crop_size),
-            tr.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
+            tr.FixScaleCrop(crop_size=906),
+            # tr.Normalize(mean=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)),
             tr.ToTensor()])
 
         return composed_transforms(sample)
@@ -129,8 +128,8 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     args = parser.parse_args()
-    args.base_size = 129
-    args.crop_size = 129
+    args.base_size = 512
+    args.crop_size = 512
 
     coco_val = COCOSegmentation(args, split='val', year='2017')
 
