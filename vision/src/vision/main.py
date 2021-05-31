@@ -260,9 +260,10 @@ class visionCentral():
             # Fast test during the training
             Acc = self.evaluator.Pixel_Accuracy()
             Acc_class = self.evaluator.Pixel_Accuracy_Class()
+            mean_accuracy = self.evaluator.Mean_Accuracy()
             mIoU = self.evaluator.Mean_Intersection_over_Union()
             FWIoU = self.evaluator.Frequency_Weighted_Intersection_over_Union()
-            print("Acc:{}, Acc_class:{}, mIoU:{}, fwIoU: {}".format(Acc, Acc_class, mIoU, FWIoU))
+            print("Acc:{}, Acc_class:{}, mAcc:{}, mIoU:{}, fwIoU: {}".format(Acc, Acc_class, mean_accuracy, mIoU, FWIoU))
 
         # self.writer.add_scalar('val/total_loss_epoch', test_loss, epoch)
         # self.writer.add_scalar('val/mIoU', mIoU, epoch)

@@ -31,6 +31,19 @@ class Evaluator(object):
         FWIoU = (freq[freq > 0] * iu[freq > 0]).sum()
         return FWIoU
 
+    def mean_accuracy(self):
+        '''
+        (1/n_cl) sum_i(n_ii/t_i)
+        '''
+        accuracy = 0
+        n_ii = np.diag(self.confusion_matrix).sum()
+        t_i  = np.sum(self.confusion_matrix.sum())
+
+        if (t_i != 0):
+            accuracy = (n_ii / t_i)/self.num_class
+
+        return accuracy
+
     def _generate_matrix(self, gt_image, pre_image):
         mask = (gt_image >= 0) & (gt_image < self.num_class)
         label = self.num_class * gt_image[mask].astype('int') + pre_image[mask]
