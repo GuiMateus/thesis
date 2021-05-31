@@ -30,5 +30,5 @@ class acquireImage():
         self.cvDepthImage = np.frombuffer(msg.data, dtype=np.uint16).reshape(msg.height, msg.width)
         mask = (self.cvDepthImage == 0).astype(np.uint8)
         print(mask)
-        self.cvDepthImage = cv2.inpaint(self.cvDepthImage, mask, 1, cv2.INPAINT_NS)
+        self.cvDepthImage = cv2.inpaint(self.cvDepthImage, mask, 5, cv2.INPAINT_NS)
         return self.cvDepthImage

@@ -12,7 +12,7 @@ from service.srv import vision_detect, vision_detectResponse, pixel2world_reques
 from sensor_msgs.msg import PointCloud2, PointCloud, ChannelFloat32
 import sensor_msgs.point_cloud2 as pc2
 from geometry_msgs.msg import Point32
-from std_msgs.msg import String, Int32
+from std_msgs.msg import String, Int32, Float32
 from visualization_msgs.msg import Marker
 from pythonClasses.imageManipulation import imageManipulation
 
@@ -20,10 +20,13 @@ from pythonClasses.imageManipulation import imageManipulation
 class pixel_to_world():
 
     def __init__(self):
-        self.a = None
+        self.toFrame = '/camera_color_optical_frame'
+        self.fromFrame = '/camera_color_optical_frame'
+        self.seq = 0
 
     def get_point(self, msg, x, y):
-
+        x = int(x)
+        y = int(y)
         depth = pc2.read_points(msg, field_names=(
             "x", "y", "z"), skip_nans=True, uvs=[
             (x, y)]) 
@@ -43,10 +46,10 @@ class pixel_to_world():
                         break
                 if break1:
                     break
-
+        
+        point = []
         if(cam_point != []):
-            point = np.array(
-                [cam_point[0][0], cam_point[0][1], cam_point[0][2]])
+            point = np.array([cam_point[0][0], cam_point[0][1], cam_point[0][2]])
 
         tf_listener = tf.TransformListener()
         tf_listener.waitForTransform(
@@ -59,20 +62,22 @@ class pixel_to_world():
         obj_vector = np.concatenate((point, np.ones(1))).reshape((4, 1))
         obj_base = np.dot(world_to_cam, obj_vector)
         print(obj_base[0:3])
-        return cam_point
+        return obj_base
 
     def pixel2WorldRequestCB(self, req):
         
         msg = rospy.wait_for_message(
         "/camera/depth_registered/points", PointCloud2)
 
-        pointSpace = self.get_point(msg, req.maskX.data, req.maskY.data)
+        pointSpace = self.get_point(msg, req.x.data, req.y.data)
 
-        worldX, worldY, worldZ = Int32()
+        worldX = Float32()
+        worldY = Float32()
+        worldZ = Float32()
 
-        worldX = pointSpace[0]
-        worldY = pointSpace[1]
-        worldZ = pointSpace[2]
+        worldX.data = pointSpace[0]
+        worldY.data = pointSpace[1]
+        worldZ.data = pointSpace[2]
 
         if worldX != None and worldY != None and worldZ != None:
             return worldX, worldY, worldZ

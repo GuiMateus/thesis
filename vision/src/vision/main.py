@@ -16,7 +16,7 @@ from pythonClasses.segmentationInit import segmentationInit
 from pythonClasses.imageManipulation import imageManipulation
 from pythonClasses.darknet import darknet
 from service.srv import vision_detect, vision_detectResponse, setobject_request, pixel2world_request
-from std_msgs.msg import String, Int32
+from std_msgs.msg import String, Float32, Int32
 
 
 class bcolors:
@@ -98,8 +98,15 @@ class visionCentral():
                 if str(self.dynamicObject) == str(ontology['dynamicObject']):
                     self.staticObject = ontology['staticObject']
                     self.task = ontology['task']
-                    self.maskX = float(ontology['maskX'])
-                    self.maskY = float(ontology['maskY'])
+                    if os.stat('.environmentReconstruction/predictions.json').st_size != 0:
+                        with open('.environmentReconstruction/predictions.json', 'r') as infile:
+                            predictions = json.load(infile)
+
+                    for prediction in predictions["detections"]:
+                        if str(self.staticObject) == str(prediction['label']):
+                            self.maskX = float(prediction['maskX'])
+                            self.maskY = float(prediction['maskY'])
+
         
 
     def useYOLO(self, image):
@@ -191,18 +198,8 @@ class visionCentral():
             segmentationImage, incomingDepth, detections, feedBackImage)
 
         if maskArray is not None and len(maskArray) != 0:
-            xMessage = Int32()
-            yMessage = Int32()
 
-            xMessage.data = self.maskX
-            yMessage.data = self.maskY
-
-            pixel2WorldService = rospy.ServiceProxy(
-            'pixel2World', pixel2world_request)
-            worldX, worldY, worldZ = pixel2WorldService(xMessage, yMessage)
-            print("Task: {} at [{},{},{}]".format(self.task, worldX, worldY, worldZ))
-
-            pp.pointCloudGenerate(visualFeedbackMasks)
+            pp.pointCloudGenerate(visualFeedbackMasks, incomingDepth)
             pp.saveCloud()
 
             if self.reconstructionType == "offline":
@@ -214,6 +211,18 @@ class visionCentral():
                 gc.collect()
                 self.initializeYOLO()
                 self.initializeDeepLab()
+            
+            elif self.reconstructionType == "online":
+                xMessage = Float32()
+                yMessage = Float32()
+
+                xMessage.data = self.maskX
+                yMessage.data = self.maskY
+
+                pixel2WorldService = rospy.ServiceProxy(
+                'pixel2world', pixel2world_request)
+                responseWorld = pixel2WorldService(xMessage, yMessage)
+                print("Task: {} at [X:{}, Y:{}, Z:{}]".format(self.task, responseWorld.x_world.data, responseWorld.y_world.data, responseWorld.z_world.data))
 
             cv2.imwrite(".environmentReconstruction/detections.png",
                         visualFeedbackObjects)

@@ -48,8 +48,9 @@ class pointCloudProcessing():
     
     def saveCloud(self):
         # o3d.visualization.draw_geometries([self.cloud])
-        octreeData = o3d.cuda.pybind.geometry.Octree(max_depth=4)
+        octreeData = o3d.cuda.pybind.geometry.Octree(max_depth=8)
         o3d.geometry.Octree.convert_from_point_cloud(octreeData, self.cloud, size_expand=0.0001)
+    
 
 
         vis = o3d.visualization.Visualizer()
