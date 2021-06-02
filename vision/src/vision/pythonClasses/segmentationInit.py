@@ -49,13 +49,13 @@ class segmentationInit():
                 gc.collect()
                 torch.cuda.empty_cache()
             # Load the DeepLabV3 model with a Resnet101 backbone
-            model = DeepLab(num_classes=21,
+            model = DeepLab(num_classes=81,
                 backbone='resnet',
                 output_stride=8,
                 sync_bn=None,
                 freeze_bn=True)
             print(model)
-            weights = torch.load('/home/gui/Documents/deeplab-resnet.pth.tar', map_location='cpu')['state_dict']
+            weights = torch.load('/home/gui/Documents/testsCoco/testCOCO80/model_best.pth.tar', map_location='cpu')['state_dict']
 
 
         
@@ -63,13 +63,13 @@ class segmentationInit():
             model = None
             gc.collect()
             torch.cuda.empty_cache()
-            model = DeepLab(num_classes=21,
+            model = DeepLab(num_classes=81,
                 backbone='resnet',
                 output_stride=8,
                 sync_bn=None,
                 freeze_bn=True)
             print(model)
-            weights = torch.load('/home/gui/Documents/deeplab-resnet.pth.tar', map_location='cpu')['state_dict']
+            weights = torch.load('/home/gui/Documents/testsCoco/testCOCO80/model_best.pth.tar', map_location='cpu')['state_dict']
 
         state_dict = self.fixDict(weights)
 

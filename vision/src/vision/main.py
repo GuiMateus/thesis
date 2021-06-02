@@ -184,8 +184,6 @@ class visionCentral():
             success = False
             j = 0
 
-            if i > 5:
-                break
 
 
             while not success and j < 1:
@@ -201,7 +199,8 @@ class visionCentral():
                 deepImage = plz2
                 feedBackImage = np.zeros(plz2.shape, np.uint8)
 
-                self.reconstructionType = req.reconstruction_type.data 
+                self.reconstructionType = "offline"
+                print("hmm")
                 
 
                 # Gather images and create copies to avoid memory address replacement
@@ -260,7 +259,7 @@ class visionCentral():
             # Fast test during the training
             Acc = self.evaluator.Pixel_Accuracy()
             Acc_class = self.evaluator.Pixel_Accuracy_Class()
-            mean_accuracy = self.evaluator.Mean_Accuracy()
+            mean_accuracy = self.evaluator.mean_accuracy()
             mIoU = self.evaluator.Mean_Intersection_over_Union()
             FWIoU = self.evaluator.Frequency_Weighted_Intersection_over_Union()
             print("Acc:{}, Acc_class:{}, mAcc:{}, mIoU:{}, fwIoU: {}".format(Acc, Acc_class, mean_accuracy, mIoU, FWIoU))
@@ -315,14 +314,16 @@ class visionCentral():
 def main():
     vc = visionCentral()
     rospy.init_node("semanticSegmentationNode")
-    rospy.Service("setObjectOfInterest", setobject_request,
-                  vc.objectOfInterestServiceCalled)
+    # rospy.Service("setObjectOfInterest", setobject_request,
+    #               vc.objectOfInterestServiceCalled)
     # Load online weights
+    vc.dynamicObject = "meh"
     vc.initializeYOLO()
     vc.initializeDeepLab()
 
-    rospy.Service("vision_service", vision_detect, vc.startService)
+    # rospy.Service("vision_service", vision_detect, vc.startService)
     while(not rospy.is_shutdown()):
+        vc.startService(1)
         rospy.spin()
 
 
