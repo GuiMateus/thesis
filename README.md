@@ -1,6 +1,6 @@
-# KUKA LBR iiwa 7 Screw Detection
+# 3D Volumetric and Semantic Environment Reconstruction
 
-This repo contains the materials used in the Master's Thesis from Guilherme Mateus at Aalborg University. The pipeline contained in it creates 3D semantical and volumetric reconstructions of environments using Deep Learning. This implementation is done using ROS melodic as a framework of communcation.
+This repo contains the materials used in the Master's Thesis from Guilherme Mateus at Aalborg University. The pipeline contained in it creates 3D semantical and volumetric reconstructions of environments using Deep Learning. This implementation is done using ROS melodic as a framework of communication.
 
 A small description of each package is given below:
 
@@ -12,12 +12,14 @@ A small description of each package is given below:
 
 ## Getting Started
 
-The system contains YOLOv4 and DeepLabV3+. However, YOLOv4 still has to be manually built under ```bash catkin_ws/src/release/vision/src/vision/pythonClasses/darknet```, for that follow the instructions on the [repo](https://github.com/AlexeyAB/darknet).
+The system contains YOLOv4 and DeepLabV3+. However, YOLOv4 still has to be manually built under ```catkin_ws/src/release/vision/src/vision/pythonClasses/darknet.py```, for that follow the instructions on the [repo](https://github.com/AlexeyAB/darknet).
 
 OBS: To build darknet you need to get a CMake version bigger than 3.12, which is not compatible with ROS. Do not uninstall the current version installed in the system, instead use a local CMake version.
 
 
 In case of problems with DeepLabV3+, follow the [repo](https://github.com/jfzhang95/pytorch-deeplab-xception).
+
+Pre-trained models and configs can be found by using ```./setup.sh```. The weights are stored under ```/opt/vision/```, therefore to use the weights models the script needs root permissions. Alternatively the weights paths must be manually changed in ```catkin_ws/src/release/vision/src/vision/pythonClasses/detectObjects.py``` and ```catkin_ws/src/release/vision/src/vision/pythonClasses/segmentationInit.py```.
 
 
 ### Prerequisites
@@ -52,7 +54,7 @@ Go to Intel Realsense website and [install the SDK for Linux](https://www.intelr
 
 ### Launching The System
 
-In order to launch the camera, communication, and 3D reconstruction system, type the following on a terminal window.
+To launch the camera, communication, and 3D reconstruction system, type the following on a terminal window.
 
 ```shell
 roslaunch tf_virtual main.launch
@@ -66,7 +68,7 @@ rosrun vision main.py
 
 # Authors
 
-* **[Guilherme Mateus Martins](mailto:gmateu16@student.aau.dk)**   - [Git Profile](https://bitbucket.org/%7Bba72de4e-9cb6-4e73-89db-24d4d8f12fe7%7D/) - [LinkedIn](https://www.linkedin.com/in/guilherme-mateus-346b58b5/)
+* **[Guilherme Mateus Martins]** - [email](mailto:gmateu16@student.aau.dk)   - [Git Profile](https://bitbucket.org/%7Bba72de4e-9cb6-4e73-89db-24d4d8f12fe7%7D/) - [LinkedIn](https://www.linkedin.com/in/guilherme-mateus-346b58b5/)
 
 # Acknowledgements
 
