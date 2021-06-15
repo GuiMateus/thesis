@@ -5,7 +5,7 @@ This repo contains the materials used in the Master's Thesis from Guilherme Mate
 A small description of each package is given below:
 
   - **ontologies**: Handles object ontonlogies.
-  - **service**: Consists of services files for robot communication.
+  - **service**: Consists of services files for system communication.
   - **realsense-ros**: Gathers data using realsense camera.
   - **userInterface**: Provides a GUI for users to control the system.
   - **vision**: Handles screw detection using YOLOv4 and DeepLabV3+.
