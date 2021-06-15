@@ -66,7 +66,7 @@ rosrun vision main.py
 
 # Authors
 
-* **[Guilherme Mateus Martins](mailto:gmateu16@student.aau.dk)**   - [Guilherme Mateus Martins](https://bitbucket.org/%7Bba72de4e-9cb6-4e73-89db-24d4d8f12fe7%7D/)
+* **[Guilherme Mateus Martins](mailto:gmateu16@student.aau.dk)**   - [Git Profile](https://bitbucket.org/%7Bba72de4e-9cb6-4e73-89db-24d4d8f12fe7%7D/) - [LinkedIn](https://www.linkedin.com/in/guilherme-mateus-346b58b5/)
 
 # Acknowledgements
 
