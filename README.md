@@ -3,6 +3,7 @@
 This repo contains the materials used in the Master's Thesis from Guilherme Mateus at Aalborg University. The pipeline contained in it creates 3D semantical and volumetric reconstructions of environments using Deep Learning. This implementation is done using ROS melodic as a framework of communcation.
 
 A small description of each package is given below:
+
   - **ontologies**: Handles object ontonlogies.
   - **service**: Consists of services files for robot communication.
   - **realsense-ros**: Gathers data using realsense camera.
