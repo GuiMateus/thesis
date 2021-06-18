@@ -20,26 +20,38 @@ from pythonClasses.imageManipulation import imageManipulation
 class pixel_to_world():
 
     def __init__(self):
+        """Class constructor
+        """
         self.toFrame = '/camera_color_optical_frame'
         self.fromFrame = '/camera_color_optical_frame'
         self.seq = 0
 
-    def get_point(self, msg, x, y):
-        x = int(x)
-        y = int(y)
+    def get_point(self, msg, u, v):
+        """Gets an (x,y,z) point in world coordinates from (u,v)
+
+        Args:
+            msg (Point Cloud): Incoming Point Cloud from realsense camera
+            u (float): [description]
+            v ([type]): [description]
+
+        Returns:
+            [type]: [description]
+        """
+        u = int(u)
+        v = int(v)
         depth = pc2.read_points(msg, field_names=(
             "x", "y", "z"), skip_nans=True, uvs=[
-            (x, y)]) 
+            (u, v)]) 
         cam_point = list(depth)
         break1 = False
 
         if(cam_point == []):
-            for x_point in range(-5, 5):
-                for y_point in range(-5, 5):
-                    tempx = x + x_point
-                    tempy = y + y_point
+            for u_point in range(-5, 5):
+                for v_point in range(-5, 5):
+                    tempu = u + u_point
+                    tempv = v + v_point
                     depth = pc2.read_points(msg, field_names=("x", "y", "z"), skip_nans=True, uvs=[
-                                            (tempx, tempy)]) 
+                                            (tempu, tempv)]) 
                     cam_point = list(depth)
                     if(cam_point != []):
                         break1 = True
@@ -65,6 +77,14 @@ class pixel_to_world():
         return obj_base
 
     def pixel2WorldRequestCB(self, req):
+        """Pixel2world callback function
+
+        Args:
+            req (Ros service): Service call request
+
+        Returns:
+            [int]: (x,y,z) point
+        """
         
         msg = rospy.wait_for_message(
         "/camera/depth_registered/points", PointCloud2)

@@ -59,7 +59,7 @@ class yoloInit():
 
         inputImage = []
 
-        print(self.reconstructionType)
+        # If online reconstruction get data from static objects
         if self.reconstructionType == "online":
             im = imageManipulation()
             offlineDetections = []
@@ -80,7 +80,7 @@ class yoloInit():
                         maxY = detection['maxY']
                     
 
-            
+            # Crop input image based on ontological relations of target dynamic object with static object
             if minX != -1 and minY != -1 and maxX != -1 and maxY != -1: 
                 self.cropRegionWidth = float(maxX) - float(minX)
                 self.cropRegionHeight = float(maxY) - float(minY)
@@ -94,10 +94,12 @@ class yoloInit():
         elif self.reconstructionType == "offline":
             inputImage = cvImage
 
-        width, height = self.getNetworkDims(networkStructure)
         # Resize image to have the dimensions the NN expects
+        width, height = self.getNetworkDims(networkStructure)
+
         inputImage = cv2.resize(inputImage, (width, height),
                              interpolation=cv2.INTER_LINEAR)
+
         # Transform the image from a np.array to a darknet.IMAGE type
         inputImage = inputImage.transpose(2, 0, 1)
         flat_image = np.ascontiguousarray(inputImage.flat, dtype=np.float32)/255.0

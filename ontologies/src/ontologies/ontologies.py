@@ -15,6 +15,14 @@ class ontologies():
         temp = 0
 
     def ontologyServiceCalled(self, req):
+        """Stores ontologies
+
+        Args:
+            req (Ros Service Request): Ros service call request 
+
+        Returns:
+            Null
+        """
 
         ontologies = []
         newOntology = True

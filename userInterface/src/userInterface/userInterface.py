@@ -10,6 +10,8 @@ from vision.pythonClasses.acquireData import acquireImage
 
 
 class userInterface():
+    """State machine used to create user interface and control the system's states
+    """
 
     def __init__(self):
         self.dynamicObjectClasses = []
@@ -20,6 +22,8 @@ class userInterface():
         self.taskOntology = []
 
     def interfaceCallback(self):
+        """Creates user interface
+        """
         # First the window layout in 2 column
         # Fr now will only show the name of the file that was chosen
         sg.theme('DarkTeal12')
@@ -48,13 +52,10 @@ class userInterface():
             [sg.Text(
                 "Assign dynamically detected objects with static object classes and a task.", font='Courier 14')],
             [sg.Button('Save Ontology', font='Courier 14', button_color=('black', 'white'))],
-            # *[[sg.Text(objectClass, font='Courier 14'),] for objectClass in self.dynamicObjectClasses],
             [sg.Listbox(list(self.dynamicObjectClasses), size=(20, 20), enable_events=False, font='Courier 14', pad=(100, 100), key="-STATIC-"), sg.Listbox(list(self.staticObjectClasses), size=(20, 20), enable_events=False, font='Courier 14', pad=(100, 100), key="-DYNAMIC-"), sg.Listbox(list(self.taskOntology), size=(20, 20), enable_events=False, font='Courier 14', pad=(100, 100), key="-TASK-")],
         ]
         selectObject_tab = [
             [sg.Text("Press image to find object.", font='Courier 14')],
-            # *[[sg.Text(objectClass, font='Courier 14'),] for objectClass in self.dynamicObjectClasses],
-
             [
                 sg.ReadFormButton('Pump', button_color=('white'), font='Courier 14', image_filename="/opt/vision/GUIImages/pump.png",
                                   image_size=(255, 255), image_subsample=1, border_width=1, pad=(25, 50), key="Pump"),
@@ -75,19 +76,15 @@ class userInterface():
                                   image_size=(255, 255), image_subsample=1, border_width=1, pad=(25, 50), key="Wire Cutter"),
                 sg.ReadFormButton('Tool box', button_color=('white'), font='Courier 14', image_filename="/opt/vision/GUIImages/toolBox.png",
                                   image_size=(255, 255), image_subsample=1, border_width=1, pad=(25, 50), key="Tool Box")
-
             ]
-
         ]
 
-        # ----- Full layout -----
+        # Use stuff from above in layout to create the interface and setup tabs
         layout = [
             [
                 sg.Image(filename="/opt/vision/GUIImages/aau.png", pad=(75, 0)),
                 sg.Button('Offline Reconstruction', pad=(50, 0),
                           font='Courier 14', button_color=('black', 'white')),
-                # sg.Listbox(list(self.dynamicObjectClassesAll), size=(30, 4), enable_events=False,
-                #            tooltip='Specify which object should be included in online reconstruction. To include all objects, select "All".'),
                 sg.Button('Online Reconstruction', pad=(50, 0),
                           font='Courier 14', button_color=('black', 'white')),
                 sg.Image(filename="/opt/vision/GUIImages/lhLogo.png",
@@ -115,11 +112,12 @@ class userInterface():
         ]
         window = sg.Window("3D Reconstruction GUI", layout)
         rawFeed =  window["-RAW-"]
-        # Run the Event Loop
 
+        # Run the Event Loop
         while True:
             event, values = window.read(timeout=1)
 
+            # Check which event user triggers
             if event == "Exit" or event == sg.WIN_CLOSED:
                 break
             if event == "Offline Reconstruction":
@@ -154,6 +152,11 @@ class userInterface():
 
 
     def setObjectOfInterest(self, object):
+        """Set an object of interest for online detection
+
+        Args:
+            object (string): Dynamic object name
+        """
         inputMessageObjectInterest = String()
 
         inputMessageObjectInterest.data = object
@@ -163,6 +166,13 @@ class userInterface():
         setObjectService(inputMessageObjectInterest)
 
     def callObjectOntologies(self, staticObject, dynamicObject, task):
+        """Set an ontological relation
+
+        Args:
+            staticObject (string): Static object name
+            dynamicObject (string): Dyanmic object name
+            task (string): Task name
+        """
         inputMessageStatic = String()
         inputMessageDynamic = String()
         inputMessageTask = String()
@@ -177,12 +187,19 @@ class userInterface():
         ontologiesService(inputMessageDynamic, inputMessageStatic, inputMessageTask)
 
     def callVisionService(self, message):
+        """Call reconstruction service
+
+        Args:
+            message (string): Type of reconstruction
+        """
         inputMessage = String()
         inputMessage.data = message
         visionService = rospy.ServiceProxy('vision_service', vision_detect)
         visionResponse = visionService(inputMessage)
 
     def getObjectClasses(self):
+        """Load names of static and dynamic objects and tasks
+        """
         with open('/opt/vision/yoloConfig/staticEnvironment.names', 'r', encoding='utf-8-sig') as file:
             content = file.readlines()
             for objectClass in content:

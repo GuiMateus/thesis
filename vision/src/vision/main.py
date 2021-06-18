@@ -202,6 +202,7 @@ class visionCentral():
             pp.pointCloudGenerate(visualFeedbackMasks, incomingDepth)
             pp.saveCloud()
 
+            # If offline detection, reload online weights and clear cache
             if self.reconstructionType == "offline":
                 cv2.imwrite(
                     ".environmentReconstruction/offlineReconstruction.png", visualFeedbackMasks)
@@ -212,6 +213,7 @@ class visionCentral():
                 self.initializeYOLO()
                 self.initializeDeepLab()
             
+            # If online create a world point where task performed with dynamic object is performed
             elif self.reconstructionType == "online":
                 xMessage = Float32()
                 yMessage = Float32()
@@ -235,6 +237,14 @@ class visionCentral():
             return []
 
     def objectOfInterestServiceCalled(self, req):
+        """Sets dynamic object of interest
+
+        Args:
+            req (Ros service): Rosservice call request
+
+        Returns:
+            Null
+        """
         self.dynamicObject = req.setObject.data
         stopComplaining = Int32()
         stopComplaining.data = 0
