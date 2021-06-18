@@ -75,6 +75,7 @@ The results can be visualized in "Object Detection", "Object Segmentation", and 
 
 ## Future works
 Some possible future works to increase quality of the repo:
+
   - **Segmentation change**: The qualitative results of the segmentation network are not satisfying, therefore it must be changed.
   - **Simplifying setup**: Setup can be a bit convoluted, so maybe I can make it a bit easier.
   - **Improve ontologies framework**: Could be cool to have some extra functionalities in ontologies and maybe use a stochastic method.
