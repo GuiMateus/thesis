@@ -62,6 +62,17 @@ To launch system type the following to a terminal window.
 roslaunch launch_nodes main.launch
 ```
 
+## Running reconstructions
+This is the user interface of the system
+
+![alt text](.images/GUI3D.png)
+
+First use offline reconstruction to detect static objects in the environment. Then, to perform an online reconstruction create ontological relations using the tab of the interface shown below, and select an object of interest under the "Object Selection" tab.
+
+![alt text](.images/ontologiesTabNew.png)
+
+The results can be visualized in "Object Detection", "Object Segmentation", and "3D Reconstruction".
+
 # Authors
 
 * **[Guilherme Mateus Martins]** - [email](mailto:gmateu16@student.aau.dk)   - [Git Profile](https://bitbucket.org/%7Bba72de4e-9cb6-4e73-89db-24d4d8f12fe7%7D/) - [LinkedIn](https://www.linkedin.com/in/guilherme-mateus-346b58b5/)
