@@ -73,6 +73,16 @@ First use offline reconstruction to detect static objects in the environment. Th
 
 The results can be visualized in "Object Detection", "Object Segmentation", and "3D Reconstruction".
 
+## Future works
+Some possible future works to increase quality of the repo:
+  - **Segmentation change**: The qualitative results of the segmentation network are not satisfying, therefore it must be changed.
+  - **Simplifying setup**: Setup can be a bit convoluted, so maybe I can make it a bit easier.
+  - **Improve ontologies framework**: Could be cool to have some extra functionalities in ontologies and maybe use a stochastic method.
+  - **Improve addition of new objects**: Kind of hard to add custom objects to system right now, have to make the training framework easier.
+  - **Parrots**: This git repo critically lacks parrots.
+
+![alt text](.images/sam.jpg)
+
 # Authors
 
 * **[Guilherme Mateus Martins]** - [email](mailto:gmateu16@student.aau.dk)   - [Git Profile](https://bitbucket.org/%7Bba72de4e-9cb6-4e73-89db-24d4d8f12fe7%7D/) - [LinkedIn](https://www.linkedin.com/in/guilherme-mateus-346b58b5/)
