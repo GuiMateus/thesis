@@ -2,9 +2,9 @@
 
 This repo contains the materials used in the Master's Thesis from Guilherme Mateus at Aalborg University. The pipeline contained in it creates 3D semantical and volumetric reconstructions of environments using Deep Learning. This implementation is done using ROS melodic as a framework of communication.
 
-![alt text](https://bitbucket.org/guimateus/thesis/src/release/.images/static_dynamic_1.png?raw=true)
-![alt text](https://bitbucket.org/guimateus/thesis/src/release/.images/static_dynamic_2.png?raw=true) 
-![alt text](https://bitbucket.org/guimateus/thesis/src/release/.images/static_dynamic_3.png?raw=true)
+![alt text](.images/static_dynamic_1.png)
+![alt text](.images/static_dynamic_2.png) 
+![alt text](.images/static_dynamic_3.png)
 
 A small description of each package is given below:
 
