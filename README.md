@@ -93,3 +93,5 @@ Some possible future works to increase quality of the repo:
 
 * Aalborg university
 * Dimitris Chrysostomou
+* Some other cool people
+* My computer for being a real trooper and not dying after this repo made it crash several times
