@@ -24,6 +24,7 @@ In case of problems with DeepLabV3+, follow the [repo](https://github.com/jfzhan
 Pre-trained models and configs can be found by using ```./setup.sh```. The weights are stored under ```/opt/vision/```, therefore to use the weights models the script needs root permissions. Alternatively the weights paths must be manually changed in ```catkin_ws/src/release/vision/src/vision/pythonClasses/detectObjects.py``` and ```catkin_ws/src/release/vision/src/vision/pythonClasses/segmentationInit.py```.
 
 
+If it still doesn't work, I don't know mate, ask my parrot, he might know it better than me or something like that.
 ### Prerequisites
 
 This requires a system setup with ROS. It is recommended to use `Ubuntu 18.04` with `ROS Melodic`.
