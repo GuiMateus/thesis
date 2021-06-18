@@ -29,6 +29,5 @@ class acquireImage():
         msg = rospy.wait_for_message("/camera/depth/image_rect_raw", Image, timeout=11)
         self.cvDepthImage = np.frombuffer(msg.data, dtype=np.uint16).reshape(msg.height, msg.width)
         mask = (self.cvDepthImage == 0).astype(np.uint8)
-        print(mask)
         self.cvDepthImage = cv2.inpaint(self.cvDepthImage, mask, 5, cv2.INPAINT_NS)
         return self.cvDepthImage

@@ -119,7 +119,6 @@ class userInterface():
 
         while True:
             event, values = window.read(timeout=1)
-            print(values)
 
             if event == "Exit" or event == sg.WIN_CLOSED:
                 break
