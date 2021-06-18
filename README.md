@@ -54,16 +54,10 @@ Go to Intel Realsense website and [install the SDK for Linux](https://www.intelr
 
 ### Launching The System
 
-To launch the camera, communication, and 3D reconstruction system, type the following on a terminal window.
+To launch system type the following to a terminal window.
 
 ```shell
-roslaunch tf_virtual main.launch
-```
-
-Then, to launch the vision service, the following must be typed.
-
-```shell
-rosrun vision main.py
+roslaunch launch_nodes main.launch
 ```
 
 # Authors
