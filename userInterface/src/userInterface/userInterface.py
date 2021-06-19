@@ -127,8 +127,11 @@ class userInterface():
             if event == "Save Ontology":
                 self.callObjectOntologies(
                     values["-STATIC-"], values["-DYNAMIC-"], values["-TASK-"])
+                sg.Popup('Object Ontology Saved. '+values["-STATIC-"][0]+' located at '+ values["-DYNAMIC-"][0] + ', used in ' + values["-TASK-"][0]+'.', keep_on_top=True)
             if event == "Pump" or event == "Cleaning Bottle" or event == "Tape" or event == "Screwdriver" or event == "Toolbox" or event == "Box Cutter" or event == "Wire Cutter" or event == "Saw":
                 self.setObjectOfInterest(event)
+                sg.Popup('Dynamic Object ' + event + ' selected.', keep_on_top=True)
+
 
             # Folder name was filled in, make a list of files in the folder
             try:
