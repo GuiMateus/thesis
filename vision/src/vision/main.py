@@ -9,6 +9,7 @@ import json
 import numpy as np
 import gc
 
+from pathlib import Path
 from pythonClasses.pointCloudProcessing import pointCloudProcessing
 from pythonClasses.acquireData import acquireImage
 from pythonClasses.detectObjects import yoloInit
@@ -90,6 +91,8 @@ class visionCentral():
         return incomingImage, incomingDepth
 
     def getStaticObject(self):
+        home = str(Path.home())
+        os.chdir(home)
         if os.stat('.environmentReconstruction/ontologies.json').st_size != 0:
             with open('.environmentReconstruction/ontologies.json', 'r') as infile:
                 ontologies = json.load(infile)
@@ -225,6 +228,8 @@ class visionCentral():
                 'pixel2world', pixel2world_request)
                 responseWorld = pixel2WorldService(xMessage, yMessage)
                 print("Task: {} at [X:{}, Y:{}, Z:{}]".format(self.task, responseWorld.x_world.data, responseWorld.y_world.data, responseWorld.z_world.data))
+                worldPoint = np.array([responseWorld.x_world.data, responseWorld.y_world.data, responseWorld.z_world.data])
+                pp.addSafetyBox(worldPoint)
 
             cv2.imwrite(".environmentReconstruction/detections.png",
                         visualFeedbackObjects)

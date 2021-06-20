@@ -11,10 +11,11 @@ from .imageManipulation import imageManipulation
 class pointCloudProcessing():
 
     def __init__(self):
-        self.intrinsicMatrix = np.matrix([[725.418477077181, 0, 316.369990062088], 
-        [0, 697.956763056449, 250.294460891937],
+        self.intrinsicMatrix = np.matrix([[1224.27427698594, 0, 642.578298005411], 
+        [0, 1150.45734614075, 476.861081665514],
         [0, 0, 1]])
         self.cloud = []
+        self.octreeData = o3d.cuda.pybind.geometry.Octree(max_depth=8)
     
     
     def pointCloudGenerate(self, rgbImage, depthImage, intensity=False):
@@ -49,12 +50,12 @@ class pointCloudProcessing():
     def saveCloud(self):
         """Create pointcloud and transform it into octree
         """
-        octreeData = o3d.cuda.pybind.geometry.Octree(max_depth=8)
-        o3d.geometry.Octree.convert_from_point_cloud(octreeData, self.cloud, size_expand=0.0001)
+        o3d.geometry.Octree.convert_from_point_cloud(self.octreeData, self.cloud, size_expand=0.0001)
+        # self.cloud = []
         vis = o3d.visualization.Visualizer()
         vis.create_window(window_name="CloudSaverWindow", width=1280, height=720, visible=False)
-        vis.add_geometry(octreeData)
-        vis.update_geometry(octreeData)
+        vis.add_geometry(self.octreeData)
+        vis.update_geometry(self.octreeData)
         vis.poll_events()
         vis.update_renderer()
         vis.capture_screen_image(".environmentReconstruction/cloud.png", True)
@@ -75,3 +76,12 @@ class pointCloudProcessing():
 
         print(octreeData)
         return octreeData
+
+    def addSafetyBox(self, point):
+        numpyPoint = np.array(point)
+        numpyPoint2 = np.array([2,2,11])
+
+        bb = o3d.geometry.AxisAlignedBoundingBox(numpyPoint, numpyPoint2)
+        bb.color = (0, 1, 0)
+        o3d.visualization.draw_geometries([self.octreeData])
+

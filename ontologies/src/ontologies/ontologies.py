@@ -27,6 +27,8 @@ class ontologies():
         ontologies = []
         newOntology = True
 
+        home = str(Path.home())
+        os.chdir(home)
         if os.stat('.environmentReconstruction/ontologies.json').st_size != 0:
             with open('.environmentReconstruction/ontologies.json', 'r') as infile:
                 ontologies = json.load(infile)
