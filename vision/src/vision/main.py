@@ -9,14 +9,15 @@ import json
 import numpy as np
 import gc
 
+from pathlib import Path
 from pythonClasses.pointCloudProcessing import pointCloudProcessing
 from pythonClasses.acquireData import acquireImage
 from pythonClasses.detectObjects import yoloInit
 from pythonClasses.segmentationInit import segmentationInit
 from pythonClasses.imageManipulation import imageManipulation
 from pythonClasses.darknet import darknet
-from service.srv import vision_detect, vision_detectResponse, setobject_request
-from std_msgs.msg import String, Int32
+from service.srv import vision_detect, vision_detectResponse, setobject_request, pixel2world_request
+from std_msgs.msg import String, Float32, Int32
 
 
 class bcolors:
@@ -46,11 +47,13 @@ class visionCentral():
         self.timeCount = 0
         self.segModel = []
         self.seq = 0
-        self.pointCloudFileName = "/opt/vision/staticEnvironment/environmentCloud.ply"
         self.reconstructionType = "online"
         self.previousReconstructionType = ""
         self.dynamicObject = ""
         self.staticObject = ""
+        self.task = ""
+        self.maskX = -1
+        self.maskY = -1
 
     def initializeYOLO(self):
         """Load YOLOv4 weights
@@ -88,14 +91,25 @@ class visionCentral():
         return incomingImage, incomingDepth
 
     def getStaticObject(self):
-        if os.stat('.environmentReconstruction/ontologies.txt').st_size != 0:
-            with open('.environmentReconstruction/ontologies.txt', 'r') as infile:
+        home = str(Path.home())
+        os.chdir(home)
+        if os.stat('.environmentReconstruction/ontologies.json').st_size != 0:
+            with open('.environmentReconstruction/ontologies.json', 'r') as infile:
                 ontologies = json.load(infile)
 
             for ontology in ontologies["Ontologies"]:
                 if str(self.dynamicObject) == str(ontology['dynamicObject']):
                     self.staticObject = ontology['staticObject']
-                    print(self.staticObject)
+
+                    self.task = ontology['task']
+                    if os.stat('.environmentReconstruction/predictions.json').st_size != 0:
+                        with open('.environmentReconstruction/predictions.json', 'r') as infile:
+                            predictions = json.load(infile)
+
+                    for prediction in predictions["detections"]:
+                        if str(self.staticObject) == str(prediction['label']):
+                            self.maskX = float(prediction['maskX'])
+                            self.maskY = float(prediction['maskY'])
 
         
 
@@ -137,9 +151,11 @@ class visionCentral():
         # Segment all the cropped objects
         if len(tensorArray) > 0:
             masks = dl.inference(self.segModel, tensorArray,
-                                 self.reconstructionType, segImage)
-            # feedback, masksOutput = dl.toImgCoord(masks, depthImage, feedback)
-            # crops = dl.getCrops()
+
+                                 self.reconstructionType)
+            feedback, masksOutput = dl.toImgCoord(masks, depthImage, feedback, self.reconstructionType)
+            crops = dl.getCrops()
+
             return feedback, masksOutput, crops
         else:
             return None, None, None
@@ -190,15 +206,11 @@ class visionCentral():
             segmentationImage, incomingDepth, detections, feedBackImage)
 
         if maskArray is not None and len(maskArray) != 0:
-            stringMsg = String()
-            detectionsMsg = vision_detectResponse()
-            jstr = im.bbox2json(crops)
-            stringMsg.data = jstr
-            detectionsMsg.image_detections = stringMsg
 
             pp.pointCloudGenerate(visualFeedbackMasks, incomingDepth)
-            pp.saveCloud(self.pointCloudFileName)
+            pp.saveCloud()
 
+            # If offline detection, reload online weights and clear cache
             if self.reconstructionType == "offline":
                 cv2.imwrite(
                     ".environmentReconstruction/offlineReconstruction.png", visualFeedbackMasks)
@@ -208,18 +220,41 @@ class visionCentral():
                 gc.collect()
                 self.initializeYOLO()
                 self.initializeDeepLab()
+            
+            # If online create a world point where task performed with dynamic object is performed
+            elif self.reconstructionType == "online":
+                xMessage = Float32()
+                yMessage = Float32()
+
+                xMessage.data = self.maskX
+                yMessage.data = self.maskY
+
+                pixel2WorldService = rospy.ServiceProxy(
+                'pixel2world', pixel2world_request)
+                responseWorld = pixel2WorldService(xMessage, yMessage)
+                print("Task: {} at [X:{}, Y:{}, Z:{}]".format(self.task, responseWorld.x_world.data, responseWorld.y_world.data, responseWorld.z_world.data))
+                worldPoint = np.array([responseWorld.x_world.data, responseWorld.y_world.data, responseWorld.z_world.data])
+                pp.addSafetyBox(worldPoint)
 
             cv2.imwrite(".environmentReconstruction/detections.png",
                         visualFeedbackObjects)
             cv2.imwrite(".environmentReconstruction/masks.png",
                         visualFeedbackMasks)
-            return detectionsMsg
+            return []
 
         else:
             print("No masks detected")
             return []
 
     def objectOfInterestServiceCalled(self, req):
+        """Sets dynamic object of interest
+
+        Args:
+            req (Ros service): Rosservice call request
+
+        Returns:
+            Null
+        """
         self.dynamicObject = req.setObject.data
         stopComplaining = Int32()
         stopComplaining.data = 0

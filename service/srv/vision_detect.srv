@@ -1,4 +1,2 @@
 std_msgs/String reconstruction_type
 ---
-std_msgs/String image_detections
-std_msgs/Int32 detection_number

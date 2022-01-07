@@ -1,0 +1,13 @@
+<launch>
+
+<include file="$(find realsense2_camera)/launch/rs_rgbd.launch"/>
+
+<node name="semanticSegmentationNode" pkg="vision" type="main.py" output="screen" /> 
+<node name="pixel_to_world" pkg="vision" type="pixel_to_world.py" output="screen" /> 
+<node name="userInterface" pkg="userInterface" type="userInterface.py" output="screen" /> 
+<node name="ontologies" pkg="ontologies" type="ontologies.py" output="screen" /> 
+
+
+<!-- <node name="robot_comm" pkg="robot_comm" type="central_comm.py" output="screen" /> -->
+
+</launch>

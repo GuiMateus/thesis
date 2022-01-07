@@ -59,7 +59,7 @@ class yoloInit():
 
         inputImage = []
 
-        print(self.reconstructionType)
+        # If online reconstruction get data from static objects
         if self.reconstructionType == "online":
             im = imageManipulation()
             offlineDetections = []
@@ -71,21 +71,16 @@ class yoloInit():
             if os.stat('.environmentReconstruction/predictions.json').st_size != 0:
                 with open('.environmentReconstruction/predictions.json', 'r') as infile:
                     offlineDetections = json.load(infile)
-                    print(offlineDetections)
-                    print(offlineDetections["detections"])
-                for detection in offlineDetections["detections"]:
 
-                    if str(self.staticObject) == str(detection['label']):
+                for detection in offlineDetections["detections"]:
+                    if str(detection["label"]) == self.staticObject:
                         minX = detection['minX']
                         minY = detection['minY']
                         maxX = detection['maxX']
                         maxY = detection['maxY']
-                        print(min)
-                        break
-                    else:
-                        print("CHOOSE AN OBJECT")
-                        return None
-            
+                    
+
+            # Crop input image based on ontological relations of target dynamic object with static object
             if minX != -1 and minY != -1 and maxX != -1 and maxY != -1: 
                 self.cropRegionWidth = float(maxX) - float(minX)
                 self.cropRegionHeight = float(maxY) - float(minY)
@@ -99,10 +94,12 @@ class yoloInit():
         elif self.reconstructionType == "offline":
             inputImage = cvImage
 
-        width, height = self.getNetworkDims(networkStructure)
         # Resize image to have the dimensions the NN expects
+        width, height = self.getNetworkDims(networkStructure)
+
         inputImage = cv2.resize(inputImage, (width, height),
                              interpolation=cv2.INTER_LINEAR)
+
         # Transform the image from a np.array to a darknet.IMAGE type
         inputImage = inputImage.transpose(2, 0, 1)
         flat_image = np.ascontiguousarray(inputImage.flat, dtype=np.float32)/255.0
@@ -139,7 +136,6 @@ class yoloInit():
         # If objects are found, they can be drawn
         if self.detections is not None:
             darknet.draw_boxes(self.detections, cvImage, colours)
-            cv2.imwrite("/home/gui/plzwork.png", cvImage)
             return cvImage, self.detections
         else:
             return None, None
@@ -158,9 +154,6 @@ class yoloInit():
         # Constant value for the minimum accepted confidence value for detections
         CONFIDENCEVALUE = 75
         detectionsOriginal = []
-
-        jsonObject = {}
-        jsonObject['detections'] = []
 
         im = imageManipulation()
 
@@ -217,33 +210,6 @@ class yoloInit():
                     detectionsOriginal.append((label, confidence, (bbox)))
 
                     # Save detections into JSON file if offline reconstruction
-                    if self.reconstructionType == "offline":
-                        minx = originalX-originalWidth/2
-                        miny = originalY-originalHeight/2
-                        maxx = originalX+originalWidth/2
-                        maxy = originalY+originalHeight/2
-                        if minx < 0:
-                            minx = 0
-                        if maxx > imageWidth:
-                            maxx = imageWidth
-                        if miny < 0:
-                            miny = 0
-                        if maxy > imageHeight:
-                            maxy = imageHeight
-
-                        jsonObject['detections'].append({
-                            'label': label,
-                            'confidence': confidence,
-                            'minX': str(minx),
-                            'minY': str(miny),
-                            'maxX': str(maxx),
-                            'maxY': str(maxy)
-                        })
-
-        # Push the offline detections into JSON
-        if self.reconstructionType == "offline" and jsonObject != {} and detections != None:
-            with open('.environmentReconstruction/predictions.json', 'w') as outfile:
-                json.dump(jsonObject, outfile)
         return detectionsOriginal
 
     def getNetworkDims(self, networkStructure):
