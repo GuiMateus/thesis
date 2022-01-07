@@ -100,6 +100,7 @@ class visionCentral():
             for ontology in ontologies["Ontologies"]:
                 if str(self.dynamicObject) == str(ontology['dynamicObject']):
                     self.staticObject = ontology['staticObject']
+
                     self.task = ontology['task']
                     if os.stat('.environmentReconstruction/predictions.json').st_size != 0:
                         with open('.environmentReconstruction/predictions.json', 'r') as infile:
@@ -142,17 +143,19 @@ class visionCentral():
         dl = segmentationInit()
         masksOutput = []
         # Crop input image into sub-regions based on the information from object detection
-        dl.handleObjectCropping(segImage, detections, self.reconstructionType)
+        # dl.handleObjectCropping(segImage, detections, self.reconstructionType)
         # Convert np.arrays to PyTorch tensors
-        tensorArray = dl.imageToTensor()
+        tensorArray = dl.imageToTensor(segImage)
 
         self.i += 1
         # Segment all the cropped objects
         if len(tensorArray) > 0:
             masks = dl.inference(self.segModel, tensorArray,
+
                                  self.reconstructionType)
             feedback, masksOutput = dl.toImgCoord(masks, depthImage, feedback, self.reconstructionType)
             crops = dl.getCrops()
+
             return feedback, masksOutput, crops
         else:
             return None, None, None
@@ -178,6 +181,8 @@ class visionCentral():
         segmentationImage = incomingImage.copy()
         feedBackImage = []
 
+        cv2.imwrite(".environmentReconstruction/offlineReconstruction.png", incomingImage)
+        
         if self.reconstructionType == "online":
             feedBackImage = cv2.imread(
                 ".environmentReconstruction/offlineReconstruction.png")
@@ -194,8 +199,8 @@ class visionCentral():
 
 
         # Object detection
-        visualFeedbackObjects, detections = self.useYOLO(yoloImage)
-
+        # visualFeedbackObjects, detections = self.useYOLO(yoloImage)
+        detections = None
         # Semantic segmentation
         visualFeedbackMasks, maskArray, crops = self.useDeepLab(
             segmentationImage, incomingDepth, detections, feedBackImage)

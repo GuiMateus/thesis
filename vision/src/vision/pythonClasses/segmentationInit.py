@@ -73,7 +73,7 @@ class segmentationInit():
 
         return model
 
-    def inference(self, model, tensorArray, reconstructionType):
+    def inference(self, model, tensorArray, reconstructionType, image):
         """Inference for semantic segmentation
 
         Args:
@@ -245,6 +245,7 @@ class segmentationInit():
         return cropped
 
     def imageToTensor(self):
+
         """Create a tensors from the cropped images
 
         Args:
@@ -254,8 +255,8 @@ class segmentationInit():
             torch.tensor[]: Returns an array of tensors from the cropped regions 
         """
 
-        tensorArray = []
-        for croppedIndex in self.crops:
+        # tensorArray = []
+        # for croppedIndex in self.crops:
             # Convert arrays into PIL.image
             # Create tensor
             tensor = self.normalizeImages(croppedIndex[0])
